@@ -14,7 +14,7 @@ export const getDishesByCategory = async (
   const response = await axiosInstance.get(
     `/dishes/category/${encodeURIComponent(category)}`
   );
-  return response.data || [];
+  return response.data.data || [];
 };
 
 /**
@@ -22,5 +22,5 @@ export const getDishesByCategory = async (
  */
 export const getSpecialOffers = async (): Promise<ApiDish[]> => {
   const response = await axiosInstance.get("/specialOffers");
-  return response.data || [];
+  return response.data.data || [];
 };

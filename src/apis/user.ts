@@ -14,7 +14,7 @@ import type {
  */
 export const getUserById = async (userId: string): Promise<ApiUser> => {
   const response = await axiosInstance.get(`/user/${userId}`);
-  return response.data;
+  return response.data.data;
 };
 
 /**
@@ -24,5 +24,5 @@ export const applyReward = async (
   data: ApplyRewardData
 ): Promise<ApplyRewardResponse> => {
   const response = await axiosInstance.post("/apply-reward", data);
-  return response.data;
+  return response.data.data;
 };

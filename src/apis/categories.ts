@@ -9,5 +9,5 @@ import axiosInstance from "../lib/axiosInterceptor";
  */
 export const getCategories = async (): Promise<string[]> => {
   const response = await axiosInstance.get("/categories");
-  return response.data || [];
+  return response.data.data || [];
 };

@@ -18,7 +18,7 @@ export const getCartItems = async (
   data: GetCartData
 ): Promise<ApiCartItem[]> => {
   const response = await axiosInstance.post("/getCart", data);
-  return response.data || [];
+  return response.data.data || [];
 };
 
 /**
@@ -28,7 +28,7 @@ export const addToCart = async (
   data: AddToCartData
 ): Promise<AddToCartResponse> => {
   const response = await axiosInstance.post("/cart", data);
-  return response.data;
+  return response.data.data;
 };
 
 /**

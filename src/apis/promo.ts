@@ -15,5 +15,5 @@ export const validatePromoCode = async (
   data: ValidatePromoData
 ): Promise<ValidatePromoResponse> => {
   const response = await axiosInstance.post("/validate-promo", data);
-  return response.data;
+  return response.data.data;
 };

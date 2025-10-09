@@ -14,7 +14,7 @@ import type {
  */
 export const getOrders = async (userId: string): Promise<ApiOrder[]> => {
   const response = await axiosInstance.get(`/orders/${userId}`);
-  return response.data || [];
+  return response.data.data || [];
 };
 
 /**
@@ -24,7 +24,7 @@ export const createOrder = async (
   data: CreateOrderData
 ): Promise<CreateOrderResponse> => {
   const response = await axiosInstance.post("/orders", data);
-  return response.data;
+  return response.data.data;
 };
 
 /**

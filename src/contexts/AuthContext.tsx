@@ -54,10 +54,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     const login = async (data: LoginData) => {
         try {
             const response = await authAPI.loginUser(data);
+            console.log(response)
 
             if (response.success) {
                 const { accessToken, refreshToken, user } = response.data;
-
                 // Save tokens and user data
                 saveTokens(accessToken, refreshToken);
                 saveUserData(user);

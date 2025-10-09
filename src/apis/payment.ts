@@ -15,5 +15,5 @@ export const createPaymentIntent = async (
   data: CreatePaymentIntentData
 ): Promise<CreatePaymentIntentResponse> => {
   const response = await axiosInstance.post("/create-payment-intent", data);
-  return response.data;
+  return response.data.data;
 };
