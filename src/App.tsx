@@ -20,6 +20,7 @@ import RegisterModal from "@/components/modals/RegisterModal";
 
 import { CartProvider } from "@/providers/CartProvider";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
+import LaunchingSoonModal from "@/components/modals/LaunchingSoonModal";
 
 import './styles/global.css'
 import './styles/components.css'
@@ -47,6 +48,7 @@ function App() {
         <ScrollToTop />
         <AuthProvider>
           <CartProvider>
+            <LaunchingSoonModal />
             <div className="flex flex-col min-h-screen relative">
               <Navbar />
               <div className="flex-1">
