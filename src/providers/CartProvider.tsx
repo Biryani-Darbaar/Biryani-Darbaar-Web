@@ -18,6 +18,7 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
         return;
       }
 
+      
       try {
         if (!userId) {
           // no user id -> load local
