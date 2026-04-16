@@ -69,3 +69,14 @@ export const logoutUser = async (accessToken?: string): Promise<void> => {
   const headers = accessToken ? { Authorization: `Bearer ${accessToken}` } : {};
   await axiosInstance.post("/auth/logout", {}, { headers });
 };
+
+/**
+ * Request a short-lived Firebase custom token for the currently authenticated
+ * user. The token lets the frontend sign into the Firebase client SDK so it
+ * can use Firestore `onSnapshot` for real-time order tracking.
+ */
+export const getFirebaseToken = async (): Promise<string> => {
+  const response = await axiosInstance.get("/auth/firebase-token");
+  // Backend returns: { success, data: { customToken } }
+  return (response.data?.data ?? response.data)?.customToken as string;
+};
