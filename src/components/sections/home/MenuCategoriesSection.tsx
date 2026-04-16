@@ -96,7 +96,15 @@ const MenuCategoriesSection: React.FC<MenuCategoriesSectionProps> = ({
                         </div>
                     </>
                 ) : (
-                    <Loading text="Loading dishes..." />
+                    <div className="flex flex-col items-center justify-center py-16 text-center">
+                        <p className="text-5xl mb-4">🍽️</p>
+                        <p className="text-neutral-500 text-lg font-medium">
+                            No dishes available in this category yet.
+                        </p>
+                        <p className="text-neutral-400 text-sm mt-1">
+                            Check back soon!
+                        </p>
+                    </div>
                 )}
             </div>
         </div>
