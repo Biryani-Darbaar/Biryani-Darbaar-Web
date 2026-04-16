@@ -9,6 +9,8 @@ interface CardComponentProps {
   buttonTitle: string;
   price: string;
   className?: string;
+  /** Override the click-through destination (defaults to /Order) */
+  href?: string;
 }
 
 const CardComponent: React.FC<CardComponentProps> = ({
@@ -18,15 +20,18 @@ const CardComponent: React.FC<CardComponentProps> = ({
   buttonTitle,
   price,
   className,
+  href = "/Order",
 }) => {
   return (
-    <div
+    <Link
+      to={href}
       className={clsx(
-        "relative w-full max-w-sm transition-transform opacity-90 hover:opacity-100 duration-300",
-        className
+        "group relative block w-full max-w-sm",
+        className,
       )}
     >
-      <div className="relative bg-white pb-8 pt-12 px-6 flex flex-col items-center rounded-b-xl overflow-hidden">
+      <div className="relative bg-white pb-8 pt-12 px-6 flex flex-col items-center rounded-b-xl overflow-hidden transition-all duration-300 group-hover:shadow-2xl group-hover:-translate-y-1.5">
+        {/* Arch SVG border */}
         <svg
           className="absolute left-0 top-0 w-full h-full pointer-events-none"
           style={{ height: "100%", width: "100%", top: 0 }}
@@ -40,18 +45,23 @@ const CardComponent: React.FC<CardComponentProps> = ({
             stroke="#f4a261"
             strokeWidth="2.5"
             vectorEffect="non-scaling-stroke"
+            className="transition-all duration-300 group-hover:stroke-red-500"
           />
         </svg>
-        <div className="relative w-40 h-40 mt-">
+
+        {/* Dish image */}
+        <div className="relative w-40 h-40 transition-transform duration-300 group-hover:scale-105">
           <img
             src={image}
             alt={`Biryani Darbaar - ${title}`}
-            className="w-full h-full object-cover rounded-full border-4 border-white"
+            className="w-full h-full object-cover rounded-full border-4 border-white shadow-md"
           />
         </div>
 
-        <div className="relative mb-4 flex justify-center"></div>
-        <span className="inline-block px-4 py-2 rounded-full bg-gradient-to-r from-yellow-300 via-orange-200 to-yellow-400 shadow-md text-neutral-900 font-extrabold text-xl border-2 border-yellow-500">
+        <div className="relative mb-4 flex justify-center" />
+
+        {/* Price badge */}
+        <span className="inline-block px-4 py-2 rounded-full bg-gradient-to-r from-yellow-300 via-orange-200 to-yellow-400 shadow-md text-neutral-900 font-extrabold text-xl border-2 border-yellow-500 transition-transform duration-300 group-hover:scale-105">
           {price}
         </span>
 
@@ -63,13 +73,14 @@ const CardComponent: React.FC<CardComponentProps> = ({
           {description}
         </p>
 
-        <Link to="/Order" className="w-full py-2 px-4">
-          <button className="w-full px-6 py-3 bg-primary text-white rounded-full hover:bg-red-600 transition-all font-semibold border border-primary">
+        {/* CTA button — pointer-events-none since the whole card is a Link */}
+        <div className="w-full py-2 px-4">
+          <div className="w-full px-6 py-3 bg-primary text-white text-center rounded-full font-semibold border border-primary transition-all duration-300 group-hover:bg-red-600 group-hover:shadow-md pointer-events-none">
             {buttonTitle}
-          </button>
-        </Link>
+          </div>
+        </div>
       </div>
-    </div>
+    </Link>
   );
 };
 

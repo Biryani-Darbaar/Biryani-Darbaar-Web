@@ -10,8 +10,9 @@ import { ModalProps } from "@/types/component.types";
 import { userAPI } from "@/apis";
 //TODO: Refactor
 
+// Stripe publishable key is loaded from environment variable
 const stripePromise: Promise<Stripe | null> = loadStripe(
-  "pk_test_51QI9zGP1mrjxuTnQyyTUejvj7utgaGHnYp3BAB4VNGDmHkpqd5xCJmV3Q9QVpI3302xjpR8K8zWxIzIzI1GfBV1t00UAvTLEY7"
+  import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || "",
 );
 
 interface UserData {
@@ -32,7 +33,8 @@ const CartModal: React.FC<ModalProps> = ({ onClose }) => {
   });
   const [reward, setReward] = useState<number>(0);
   const [rewardDiscount, setRewardDiscount] = useState<number>(0);
-  const [applyRewardDiscount, setApplyRewardDiscount] = useState<boolean>(false);
+  const [applyRewardDiscount, setApplyRewardDiscount] =
+    useState<boolean>(false);
   const [finalTotal, setFinalTotal] = useState<number>(0);
 
   const userId: string | null = sessionStorage.getItem("sessionUserId");
@@ -58,20 +60,20 @@ const CartModal: React.FC<ModalProps> = ({ onClose }) => {
 
   const grandTotal: number = cartItems.reduce(
     (total: number, item) => total + item.price * item.quantity,
-    0
+    0,
   );
   const discountedTotal: number = grandTotal * (1 - discount);
 
   useEffect(() => {
     setFinalTotal(
-      applyRewardDiscount ? discountedTotal - rewardDiscount : discountedTotal
+      applyRewardDiscount ? discountedTotal - rewardDiscount : discountedTotal,
     );
   }, [applyRewardDiscount, discountedTotal, rewardDiscount]);
 
   const handleRewardDiscount = async (
     reward: number,
     userId: string,
-    dollar: number
+    dollar: number,
   ): Promise<void> => {
     try {
       const response = await userAPI.applyReward({ reward, userId, dollar });
@@ -120,7 +122,9 @@ const CartModal: React.FC<ModalProps> = ({ onClose }) => {
                     <h3 className="text-lg font-bold text-neutral-800">
                       {item.name}
                     </h3>
-                    <p className="text-sm text-neutral-500">{item.description}</p>
+                    <p className="text-sm text-neutral-500">
+                      {item.description}
+                    </p>
                   </div>
                 </div>
                 <div className="mt-4 flex justify-between items-center">
