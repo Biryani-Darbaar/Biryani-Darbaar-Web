@@ -10,11 +10,20 @@ import type {
 // ============================================================================
 
 /**
- * Fetch orders for a user
+ * Fetch all orders for the currently authenticated user.
+ * The backend resolves the user from the JWT — no userId param needed.
  */
-export const getOrders = async (userId: string): Promise<ApiOrder[]> => {
-  const response = await axiosInstance.get(`/orders/${userId}`);
-  return response.data.data || [];
+export const getOrders = async (): Promise<ApiOrder[]> => {
+  const response = await axiosInstance.get("/orders");
+  return response.data || [];
+};
+
+/**
+ * Fetch a single order by ID for the authenticated user
+ */
+export const getOrderById = async (orderId: string): Promise<ApiOrder> => {
+  const response = await axiosInstance.get(`/orders/${orderId}`);
+  return response.data;
 };
 
 /**
@@ -24,7 +33,7 @@ export const createOrder = async (
   data: CreateOrderData
 ): Promise<CreateOrderResponse> => {
   const response = await axiosInstance.post("/orders", data);
-  return response.data.data;
+  return response.data;
 };
 
 /**
