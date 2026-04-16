@@ -7,3 +7,5 @@ export * as paymentAPI from "./payment";
 export * as promoAPI from "./promo";
 export * as contactAPI from "./contact";
 export * as ordersAPI from "./orders";
+export * as mediaAPI from "./media";
+export * as walletAPI from "./wallet";
