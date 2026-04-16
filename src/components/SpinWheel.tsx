@@ -6,10 +6,34 @@ import { useWallet } from "@/contexts/WalletContext";
 // ── Wheel configuration ───────────────────────────────────────────────────────
 
 const SEGMENTS = [
-  { coins: 0,  color: "#9CA3AF", darkColor: "#6B7280", label: "Try Again", emoji: "😅" },
-  { coins: 5,  color: "#60A5FA", darkColor: "#3B82F6", label: "5 Coins",   emoji: "🪙" },
-  { coins: 10, color: "#34D399", darkColor: "#10B981", label: "10 Coins",  emoji: "💰" },
-  { coins: 20, color: "#FBBF24", darkColor: "#F59E0B", label: "20 Coins",  emoji: "🏆" },
+  {
+    coins: 0,
+    color: "#9CA3AF",
+    darkColor: "#6B7280",
+    label: "Try Again",
+    emoji: "😅",
+  },
+  {
+    coins: 5,
+    color: "#60A5FA",
+    darkColor: "#3B82F6",
+    label: "5 Coins",
+    emoji: "🪙",
+  },
+  {
+    coins: 10,
+    color: "#34D399",
+    darkColor: "#10B981",
+    label: "10 Coins",
+    emoji: "💰",
+  },
+  {
+    coins: 20,
+    color: "#FBBF24",
+    darkColor: "#F59E0B",
+    label: "20 Coins",
+    emoji: "🏆",
+  },
 ];
 
 // Each segment is 90° wide; pointer is at top (12 o'clock = 0°).
@@ -29,10 +53,10 @@ function getTargetRotation(segIdx: number, currentRotation: number): number {
 
 /** SVG wheel with 4 equal segments */
 const WheelGraphic: React.FC<{ rotation: number }> = ({ rotation }) => {
-  const size  = 260;
-  const cx    = size / 2;
-  const cy    = size / 2;
-  const r     = cx - 8;
+  const size = 260;
+  const cx = size / 2;
+  const cy = size / 2;
+  const r = cx - 8;
 
   return (
     <svg
@@ -44,9 +68,9 @@ const WheelGraphic: React.FC<{ rotation: number }> = ({ rotation }) => {
       {/* Segment arcs */}
       {SEGMENTS.map((seg, i) => {
         const startDeg = i * 90 - 90; // offset so segment 0 starts at top
-        const endDeg   = startDeg + 90;
+        const endDeg = startDeg + 90;
         const startRad = (startDeg * Math.PI) / 180;
-        const endRad   = (endDeg   * Math.PI) / 180;
+        const endRad = (endDeg * Math.PI) / 180;
 
         const x1 = cx + r * Math.cos(startRad);
         const y1 = cy + r * Math.sin(startRad);
@@ -54,7 +78,7 @@ const WheelGraphic: React.FC<{ rotation: number }> = ({ rotation }) => {
         const y2 = cy + r * Math.sin(endRad);
 
         const midRad = ((startDeg + 45) * Math.PI) / 180;
-        const textR  = r * 0.62;
+        const textR = r * 0.62;
         const tx = cx + textR * Math.cos(midRad);
         const ty = cy + textR * Math.sin(midRad);
         const textRotation = startDeg + 45;
@@ -87,8 +111,21 @@ const WheelGraphic: React.FC<{ rotation: number }> = ({ rotation }) => {
       })}
 
       {/* Center circle */}
-      <circle cx={cx} cy={cy} r={22} fill="white" stroke="#E5E7EB" strokeWidth={3} />
-      <text x={cx} y={cy} textAnchor="middle" dominantBaseline="middle" fontSize={18}>
+      <circle
+        cx={cx}
+        cy={cy}
+        r={22}
+        fill="white"
+        stroke="#E5E7EB"
+        strokeWidth={3}
+      />
+      <text
+        x={cx}
+        y={cy}
+        textAnchor="middle"
+        dominantBaseline="middle"
+        fontSize={18}
+      >
         🎰
       </text>
     </svg>
@@ -102,7 +139,12 @@ const Pointer: React.FC = () => (
     style={{ filter: "drop-shadow(0 2px 4px rgba(0,0,0,0.3))" }}
   >
     <svg width={28} height={34} viewBox="0 0 28 34">
-      <polygon points="14,2 26,30 2,30" fill="#EF4444" stroke="white" strokeWidth={2} />
+      <polygon
+        points="14,2 26,30 2,30"
+        fill="#EF4444"
+        stroke="white"
+        strokeWidth={2}
+      />
     </svg>
   </div>
 );
@@ -119,10 +161,10 @@ type Phase = "idle" | "spinning" | "result";
 const SpinWheel: React.FC<SpinWheelProps> = ({ isOpen, onClose }) => {
   const { spin, walletBalance } = useWallet();
 
-  const [phase,       setPhase]       = useState<Phase>("idle");
-  const [rotation,    setRotation]    = useState(0);
-  const [coinsWon,    setCoinsWon]    = useState<number | null>(null);
-  const [error,       setError]       = useState("");
+  const [phase, setPhase] = useState<Phase>("idle");
+  const [rotation, setRotation] = useState(0);
+  const [coinsWon, setCoinsWon] = useState<number | null>(null);
+  const [error, setError] = useState("");
   const rotationRef = useRef(0);
 
   const handleSpin = async () => {
@@ -150,7 +192,9 @@ const SpinWheel: React.FC<SpinWheelProps> = ({ isOpen, onClose }) => {
       setTimeout(() => setPhase("result"), 4200);
     } catch (err: unknown) {
       const msg =
-        err instanceof Error ? err.message : "Something went wrong. Please try again.";
+        err instanceof Error
+          ? err.message
+          : "Something went wrong. Please try again.";
       setError(msg);
       setPhase("idle");
     }
@@ -183,7 +227,7 @@ const SpinWheel: React.FC<SpinWheelProps> = ({ isOpen, onClose }) => {
           <motion.div
             className="relative z-10 bg-white rounded-3xl shadow-2xl w-full max-w-sm overflow-hidden"
             initial={{ opacity: 0, scale: 0.85, y: 24 }}
-            animate={{ opacity: 1, scale: 1,    y: 0 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.85, y: 24 }}
             transition={{ type: "spring", stiffness: 300, damping: 28 }}
           >
@@ -205,7 +249,9 @@ const SpinWheel: React.FC<SpinWheelProps> = ({ isOpen, onClose }) => {
               <div className="text-center">
                 <div className="flex items-center justify-center gap-2 mb-1">
                   <Sparkles size={20} className="text-yellow-500" />
-                  <h2 className="text-xl font-bold text-gray-900">Daily Spin!</h2>
+                  <h2 className="text-xl font-bold text-gray-900">
+                    Daily Spin!
+                  </h2>
                   <Sparkles size={20} className="text-yellow-500" />
                 </div>
                 <p className="text-sm text-gray-500">
@@ -239,7 +285,8 @@ const SpinWheel: React.FC<SpinWheelProps> = ({ isOpen, onClose }) => {
                 <div
                   className="absolute inset-0 rounded-full pointer-events-none"
                   style={{
-                    boxShadow: "inset 0 0 0 6px white, 0 0 0 3px #E5E7EB, 0 4px 20px rgba(0,0,0,0.15)",
+                    boxShadow:
+                      "inset 0 0 0 6px white, 0 0 0 3px #E5E7EB, 0 4px 20px rgba(0,0,0,0.15)",
                     borderRadius: "50%",
                   }}
                 />
@@ -258,24 +305,40 @@ const SpinWheel: React.FC<SpinWheelProps> = ({ isOpen, onClose }) => {
                     {coinsWon === 0 ? (
                       <div className="bg-gray-50 rounded-2xl p-4">
                         <p className="text-3xl mb-1">😅</p>
-                        <p className="font-bold text-gray-700">No coins this time!</p>
-                        <p className="text-sm text-gray-500 mt-0.5">Come back tomorrow for another spin.</p>
+                        <p className="font-bold text-gray-700">
+                          No coins this time!
+                        </p>
+                        <p className="text-sm text-gray-500 mt-0.5">
+                          Come back tomorrow for another spin.
+                        </p>
                       </div>
                     ) : (
                       <div
                         className="rounded-2xl p-4"
-                        style={{ background: `${resultSeg.color}20`, border: `1.5px solid ${resultSeg.color}` }}
+                        style={{
+                          background: `${resultSeg.color}20`,
+                          border: `1.5px solid ${resultSeg.color}`,
+                        }}
                       >
                         <p className="text-3xl mb-1">{resultSeg.emoji}</p>
-                        <p className="text-2xl font-black" style={{ color: resultSeg.darkColor }}>
+                        <p
+                          className="text-2xl font-black"
+                          style={{ color: resultSeg.darkColor }}
+                        >
                           +{coinsWon} Coins!
                         </p>
                         <p className="text-sm text-gray-600 mt-0.5">
-                          Worth <span className="font-semibold">${(coinsWon * 0.1).toFixed(2)} AUD</span> off your next order
+                          Worth{" "}
+                          <span className="font-semibold">
+                            ${(coinsWon ? coinsWon * 0.1 : 0).toFixed(2)} AUD
+                          </span>{" "}
+                          off your next order
                         </p>
                         <div className="mt-2 flex items-center justify-center gap-1 bg-white/70 rounded-full px-3 py-1 w-fit mx-auto">
                           <span className="text-sm">🪙</span>
-                          <span className="text-sm font-bold text-amber-700">Balance: {walletBalance} coins</span>
+                          <span className="text-sm font-bold text-amber-700">
+                            Balance: {walletBalance} coins
+                          </span>
                         </div>
                       </div>
                     )}
@@ -338,10 +401,16 @@ const SpinWheel: React.FC<SpinWheelProps> = ({ isOpen, onClose }) => {
                     <div
                       key={seg.coins}
                       className="flex flex-col items-center gap-1 py-1.5 px-1 rounded-lg"
-                      style={{ background: `${seg.color}18`, border: `1px solid ${seg.color}40` }}
+                      style={{
+                        background: `${seg.color}18`,
+                        border: `1px solid ${seg.color}40`,
+                      }}
                     >
                       <span className="text-base">{seg.emoji}</span>
-                      <span className="text-xs font-bold" style={{ color: seg.darkColor }}>
+                      <span
+                        className="text-xs font-bold"
+                        style={{ color: seg.darkColor }}
+                      >
                         {seg.coins === 0 ? "—" : `${seg.coins}🪙`}
                       </span>
                     </div>
