@@ -12,9 +12,9 @@ import { X } from "lucide-react";
 import { motion } from "framer-motion";
 import { paymentAPI, ordersAPI } from "@/apis";
 import { useCart } from "../contexts/CartContext";
-// TODO: REFACTOR
+// Stripe publishable key is loaded from environment variable
 const stripePromise = loadStripe(
-  "pk_test_51QI9zGP1mrjxuTnQyyTUejvj7utgaGHnYp3BAB4VNGDmHkpqd5xCJmV3Q9QVpI3302xjpR8K8zWxIzIzI1GfBV1t00UAvTLEY7"
+  import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || "",
 );
 
 interface OrderItem {
@@ -61,13 +61,12 @@ const Checkout: React.FC<CheckoutProps> = ({
       setLoading(true);
       const { clientSecret } = await paymentAPI.createPaymentIntent({
         amount,
-        currency: "AUD"
+        currency: "AUD",
       });
 
       const result = await stripe.confirmCardPayment(clientSecret, {
         payment_method: { card: elements.getElement(CardElement)! },
-      }
-      );
+      });
 
       if (result.error) {
         setPaymentError(result.error.message || "An unknown error occurred.");
@@ -88,7 +87,7 @@ const Checkout: React.FC<CheckoutProps> = ({
 
         await ordersAPI.createOrder(orderDetails);
         await ordersAPI.deleteCartItemsAfterOrder(
-          order.map((item) => item.cartItemId)
+          order.map((item) => item.cartItemId),
         );
         clearCart();
         setToastState(true);
@@ -147,10 +146,11 @@ const Checkout: React.FC<CheckoutProps> = ({
         <button
           onClick={handlePayment}
           disabled={!stripe || loading}
-          className={`w-full px-4 py-2 text-white rounded-lg transition ${loading
-            ? "bg-neutral-400 cursor-not-allowed"
-            : "bg-blue-500 hover:bg-blue-600"
-            }`}
+          className={`w-full px-4 py-2 text-white rounded-lg transition ${
+            loading
+              ? "bg-neutral-400 cursor-not-allowed"
+              : "bg-blue-500 hover:bg-blue-600"
+          }`}
         >
           {loading ? "Processing..." : `Pay $${amount.toFixed(2)}`}
         </button>

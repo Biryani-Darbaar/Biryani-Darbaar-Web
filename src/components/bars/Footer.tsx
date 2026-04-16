@@ -67,7 +67,10 @@ const Footer: React.FC = () => {
               Subscribe to our newsletter for exclusive updates, delicious
               recipes, and special promotions delivered straight to your inbox.
             </p>
-            <form className="flex flex-col sm:flex-row gap-3" onSubmit={handleNewsletterSubmit}>
+            <form
+              className="flex flex-col sm:flex-row gap-3"
+              onSubmit={handleNewsletterSubmit}
+            >
               <input
                 type="email"
                 placeholder="Enter your email"
@@ -89,7 +92,8 @@ const Footer: React.FC = () => {
       <div className="border-t border-neutral-200 py-6">
         <div className="container-custom">
           <p className="text-center text-neutral-600 text-sm md:text-base">
-            &copy; {new Date().getFullYear()} Biryani Darbaar. All rights reserved.
+            &copy; {new Date().getFullYear()} Biryani Darbaar. All rights
+            reserved.
           </p>
         </div>
       </div>

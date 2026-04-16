@@ -45,7 +45,6 @@ const LargeImageView: React.FC<LargeImageViewProps> = ({
 
   return (
     <div className="w-full bg-yellow-100 rounded-lg border p-6 md:p-12">
-
       <div className="max-w-7xl mx-auto">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
           {/* Left Section - Info */}
@@ -59,7 +58,7 @@ const LargeImageView: React.FC<LargeImageViewProps> = ({
             <div className="flex flex-wrap gap-3">
               <div className="flex items-center gap-2 bg-gray-900 text-white px-4 py-3 rounded-full">
                 <Receipt className="w-5 h-5" />
-                <span className="font-medium">Minimum Order: 12 GBP</span>
+                <span className="font-medium">Minimum Order:25 AUD</span>
               </div>
               <div className="flex items-center gap-2 bg-gray-900 text-white px-4 py-3 rounded-full">
                 <Bike className="w-5 h-5" />
@@ -90,10 +89,14 @@ const LargeImageView: React.FC<LargeImageViewProps> = ({
               <div className="text-5xl font-bold text-gray-900 mb-1">3.4</div>
               <div className="flex gap-1 mb-2 justify-center">
                 {[...Array(3)].map((_, i) => (
-                  <span key={i} className="text-yellow-400 text-xl">★</span>
+                  <span key={i} className="text-yellow-400 text-xl">
+                    ★
+                  </span>
                 ))}
                 {[...Array(2)].map((_, i) => (
-                  <span key={i} className="text-gray-300 text-xl">★</span>
+                  <span key={i} className="text-gray-300 text-xl">
+                    ★
+                  </span>
                 ))}
               </div>
               <div className="text-sm text-gray-600">1,360 reviews</div>
@@ -136,10 +139,11 @@ const LargeImageView: React.FC<LargeImageViewProps> = ({
                   <button
                     key={index}
                     onClick={() => goToImage(index)}
-                    className={`transition-all rounded-full ${index === currentImage
-                      ? "w-8 h-2 bg-white"
-                      : "w-2 h-2 bg-white/50 hover:bg-white/75"
-                      }`}
+                    className={`transition-all rounded-full ${
+                      index === currentImage
+                        ? "w-8 h-2 bg-white"
+                        : "w-2 h-2 bg-white/50 hover:bg-white/75"
+                    }`}
                     aria-label={`Go to image ${index + 1}`}
                   />
                 ))}
