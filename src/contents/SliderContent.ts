@@ -21,7 +21,7 @@ export const DINE_IN_MENU_ITEMS: DineInMenuItem[] = [
   },
   {
     image: "/assets/images/categories/chickenbiryani.svg",
-    label: "BIRYANI'S",
+    label: "BIRYANI SPECIALS",
   },
 ];
 
