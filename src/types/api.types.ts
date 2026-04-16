@@ -31,32 +31,41 @@ export interface SignupWithGoogleData {
   address: string;
 }
 
+/**
+ * AuthResponse reflects what the axios interceptor returns AFTER unwrapping the
+ * standard { success, statusCode, data } envelope. The shape is the inner `data`
+ * object that the backend places inside `data`:
+ *   { user, tokens: { accessToken, refreshToken, expiresIn }, sessionId }
+ */
 export interface AuthResponse {
-  success: boolean;
-  message: string;
-  data: {
+  user: {
+    userId: string;
+    firstName: string;
+    lastName: string;
+    fullName?: string;
+    email: string;
+    phoneNumber: string;
+    address: string;
+    role: string;
+    isGoldMember: boolean;
+    emailVerified?: boolean;
+  };
+  tokens: {
     accessToken: string;
     refreshToken: string;
-    sessionId: string;
-    user: {
-      userId: string;
-      firstName: string;
-      lastName: string;
-      email: string;
-      phoneNumber: string;
-      address: string;
-      role: string;
-      isGoldMember: boolean;
-    };
-  };
-}
-
-export interface RefreshTokenResponse {
-  success: boolean;
-  data: {
-    accessToken: string;
     expiresIn: string;
   };
+  sessionId?: number;
+}
+
+/**
+ * RefreshTokenResponse reflects what the axios interceptor returns AFTER
+ * unwrapping the { success, statusCode, data } envelope — i.e. just the
+ * inner data object: { accessToken, expiresIn }.
+ */
+export interface RefreshTokenResponse {
+  accessToken: string;
+  expiresIn: string;
 }
 
 export interface LoginWithGoogleResponse {
@@ -138,19 +147,28 @@ export interface ApiDish {
 
 export interface ApiOrderItem {
   dishId: string;
-  dishName: string;
-  cartItemId: string;
+  /** Field name from backend */
+  dishName?: string;
+  /** Alternative name field used in some responses */
+  name?: string;
+  cartItemId?: string;
   quantity: number;
   price: number;
 }
 
 export interface ApiOrder {
   orderId: string;
+  userId?: string;
+  userName?: string;
   orderItems: ApiOrderItem[];
   totalPrice: number;
   orderDate: string;
   orderStatus: string;
-  customerAddress: string;
+  /** Delivery address or 'Pickup' */
+  address?: string;
+  customerAddress?: string;
+  paymentIntentId?: string;
+  paymentVerified?: boolean;
 }
 
 export interface CreateOrderData {
@@ -165,6 +183,14 @@ export interface CreateOrderData {
     price: number;
   }[];
   totalPrice: number;
+  /** Stripe PaymentIntent ID — stored for reference and dispute resolution */
+  paymentIntentId?: string;
+  /** Initial order status; defaults to 'pending' on the backend */
+  orderStatus?: string;
+  /** Coins redeemed for a discount on this order */
+  coinsUsed?: number;
+  /** AUD discount applied from coins (coinsUsed * 0.10) */
+  coinDiscount?: number;
 }
 
 export interface CreateOrderResponse {
@@ -176,12 +202,27 @@ export interface CreateOrderResponse {
 // ============================================================================
 
 export interface CreatePaymentIntentData {
+  /** Amount in dollars (backend converts to cents automatically) */
   amount: number;
   currency: string;
 }
 
 export interface CreatePaymentIntentResponse {
   clientSecret: string;
+  paymentIntentId: string;
+}
+
+export interface VerifyPaymentData {
+  paymentIntentId: string;
+  /** Optional: if provided the backend will confirm the order in Firestore */
+  orderId?: string;
+}
+
+export interface VerifyPaymentResponse {
+  verified: boolean;
+  status: string;
+  amount: number;
+  currency: string;
 }
 
 // ============================================================================
@@ -225,4 +266,36 @@ export interface ApplyRewardData {
 export interface ApplyRewardResponse {
   reward: number;
   totalPrice: number;
+}
+
+// ============================================================================
+// Wallet / Spin-Wheel API Types
+// ============================================================================
+
+export interface WalletData {
+  walletBalance: number;
+  lastSpinAt: string | null;
+  canSpinToday: boolean;
+}
+
+export interface WalletSpinResponse {
+  coinsWon: number;
+  walletBalance: number;
+  lastSpinAt: string;
+}
+
+export interface WalletRedeemData {
+  coinsToRedeem: number;
+}
+
+export interface WalletRedeemResponse {
+  coinsRedeemed: number;
+  /** AUD discount — 1 coin = $0.10 */
+  discountAmount: number;
+  walletBalance: number;
+}
+
+export interface WalletAdminUpdateData {
+  action: "increase" | "decrease" | "reset";
+  amount?: number;
 }

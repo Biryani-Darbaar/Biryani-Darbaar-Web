@@ -20,6 +20,8 @@ export interface CartContextType {
     quantity: number
   ) => Promise<void>;
   updateQuantity: (cartItemId: string, change: number) => void;
-  removeFromCart: (cartItemId: string) => void;
-  clearCart: () => void;
+  removeFromCart: (cartItemId: string) => Promise<void>;
+  clearCart: () => Promise<void>;
+  /** Reload cart items from the backend (call after login) */
+  refetchCart: () => Promise<void>;
 }
