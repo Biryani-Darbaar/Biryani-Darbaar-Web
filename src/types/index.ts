@@ -4,11 +4,13 @@ export interface ApiError {
   response?: {
     data?: {
       message?: string;
+      // Some error responses nest the message inside a data envelope
+      data?: { message?: string };
     };
   };
 }
 
-// Type guard to check if error is ApiError
+// Type guard to check if error is ApiError (covers Axios errors too)
 export const isApiError = (error: unknown): error is ApiError => {
   return (
     typeof error === "object" &&
@@ -18,10 +20,22 @@ export const isApiError = (error: unknown): error is ApiError => {
   );
 };
 
-// Helper to extract error message
+/**
+ * Extract a human-readable message from any error type.
+ *
+ * Priority order:
+ *  1. error.response.data.message   — direct backend message (most specific)
+ *  2. error.response.data.data.message — nested envelope (legacy shape)
+ *  3. error.message                  — Axios/JS Error message
+ *  4. Fallback string
+ */
 export const getErrorMessage = (error: unknown): string => {
   if (isApiError(error)) {
-    return error.response?.data?.message || error.message;
+    return (
+      error.response?.data?.message ||
+      error.response?.data?.data?.message ||
+      error.message
+    );
   }
   if (error instanceof Error) {
     return error.message;

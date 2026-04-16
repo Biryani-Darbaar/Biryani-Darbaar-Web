@@ -8,7 +8,10 @@ export interface Order {
   totalPrice: number;
   orderDate: string;
   orderStatus: string;
-  customerAddress: string;
+  customerAddress?: string;
+  address?: string;
+  paymentIntentId?: string;
+  paymentVerified?: boolean;
 }
 
 export interface OrderItem {
