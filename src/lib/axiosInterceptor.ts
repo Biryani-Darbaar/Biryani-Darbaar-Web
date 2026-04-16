@@ -23,7 +23,19 @@ axiosInstance.interceptors.request.use(
 // Response interceptor - Handle token refresh and errors
 axiosInstance.interceptors.response.use(
   (response) => {
-    // Return response as-is, no transformation
+    // Extract data from the standard API response format
+    // If response has { success, statusCode, data } structure, return the data
+    if (
+      response.data &&
+      "data" in response.data &&
+      "success" in response.data
+    ) {
+      return {
+        ...response,
+        data: response.data.data, // Return just the data property
+        originalData: response.data, // Keep original for reference if needed
+      };
+    }
     return response;
   },
   async (error) => {
@@ -48,12 +60,8 @@ axiosInstance.interceptors.response.use(
           refreshToken,
         });
 
-        if (
-          response.data &&
-          response.data.data &&
-          response.data.data.accessToken
-        ) {
-          const { accessToken } = response.data.data;
+        if (response.data && response.data.accessToken) {
+          const { accessToken } = response.data;
           const currentRefresh = getRefreshToken();
 
           if (currentRefresh) {
