@@ -28,13 +28,36 @@ export const validateName = (
   return null;
 };
 
+/**
+ * Validates an Australian phone number.
+ * Accepted formats (spaces allowed anywhere):
+ *   04XX XXX XXX  — mobile local
+ *   +61 4XX XXX XXX — mobile international
+ *   02/03/07/08 XXXX XXXX — landline local
+ *   +61 2/3/7/8 XXXX XXXX — landline international
+ *
+ * Regex (applied after stripping all spaces):
+ *   /^(\+61[2-9]\d{8}|0[2-9]\d{8})$/
+ */
 export const validatePhoneNumber = (phone: string): string | null => {
   if (!phone) return "Phone number is required";
-  const phoneRegex = /^\d{10,15}$/;
-  if (!phoneRegex.test(phone.replace(/\s+/g, ""))) {
-    return "Please enter a valid phone number (10-15 digits)";
+  const stripped = phone.replace(/\s+/g, ""); // remove all spaces
+  const auPhoneRegex = /^(\+61[2-9]\d{8}|0[2-9]\d{8})$/;
+  if (!auPhoneRegex.test(stripped)) {
+    return "Enter a valid Australian number (e.g. 0412 345 678 or +61 412 345 678)";
   }
   return null;
+};
+
+/**
+ * Normalises any accepted Australian phone format to E.164 (+61XXXXXXXXX).
+ * Safe to call only after validatePhoneNumber passes.
+ */
+export const normalizeAustralianPhone = (phone: string): string => {
+  const stripped = phone.replace(/\s+/g, "");
+  if (stripped.startsWith("+61")) return stripped;
+  // local format: 0XXXXXXXXX → +61XXXXXXXXX
+  return "+61" + stripped.slice(1);
 };
 
 export const validateAddress = (address: string): string | null => {
