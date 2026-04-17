@@ -6,9 +6,20 @@ import {
   clearAuthData,
 } from "@/lib/authStorage";
 
+const notifyAuthExpired = () => {
+  clearAuthData();
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(new CustomEvent("auth:expired"));
+  }
+};
+
 // Request interceptor - Add auth token to requests
 axiosInstance.interceptors.request.use(
   (config) => {
+    if (config.skipAuth) {
+      return config;
+    }
+
     const accessToken = getAccessToken();
     if (accessToken && config.headers) {
       config.headers.Authorization = `Bearer ${accessToken}`;
@@ -41,6 +52,10 @@ axiosInstance.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
 
+    if (originalRequest?.skipAuth) {
+      return Promise.reject(error);
+    }
+
     // If error is 401 (Unauthorized) and we haven't retried yet
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
@@ -49,16 +64,21 @@ axiosInstance.interceptors.response.use(
         const refreshToken = getRefreshToken();
 
         if (!refreshToken) {
-          // No refresh token available, clear auth and redirect to login
-          clearAuthData();
-          window.location.href = "/";
+          // No refresh token available, clear auth state and let the UI react.
+          notifyAuthExpired();
           return Promise.reject(error);
         }
 
         // Try to refresh the access token
-        const response = await axiosInstance.post("/auth/refresh-token", {
-          refreshToken,
-        });
+        const response = await axiosInstance.post(
+          "/auth/refresh-token",
+          {
+            refreshToken,
+          },
+          {
+            skipAuth: true,
+          }
+        );
 
         if (response.data && response.data.accessToken) {
           const { accessToken } = response.data;
@@ -75,10 +95,9 @@ axiosInstance.interceptors.response.use(
           return axiosInstance(originalRequest);
         }
       } catch (refreshError) {
-        // Refresh token failed, clear auth and redirect to login
+        // Refresh token failed, clear auth state and let the UI react.
         console.error("Token refresh failed:", refreshError);
-        clearAuthData();
-        window.location.href = "/";
+        notifyAuthExpired();
         return Promise.reject(refreshError);
       }
     }

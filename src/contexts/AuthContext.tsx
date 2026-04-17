@@ -55,6 +55,17 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<StoredUserData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
+  useEffect(() => {
+    const handleAuthExpired = () => {
+      void firebaseSignOut(firebaseAuth).catch(() => {});
+      sessionStorage.removeItem("sessionUserId");
+      setUser(null);
+    };
+
+    window.addEventListener("auth:expired", handleAuthExpired);
+    return () => window.removeEventListener("auth:expired", handleAuthExpired);
+  }, []);
+
   // Initialize auth state from localStorage.
   // If the access token is expired but a refresh token exists, silently refresh
   // before the first API call so users don't see a brief 401 flash.

@@ -14,7 +14,9 @@ export interface SpecialMediaItem {
  * Public endpoint — no auth required.
  */
 export const getSpecialOfferMedia = async (): Promise<SpecialMediaItem[]> => {
-  const response = await axiosInstance.get("/special-offer-media");
+  const response = await axiosInstance.get("/special-offer-media", {
+    skipAuth: true,
+  });
   const data = response.data?.data ?? response.data ?? [];
   return Array.isArray(data) ? data : [];
 };
