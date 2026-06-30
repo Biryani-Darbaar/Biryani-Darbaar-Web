@@ -427,7 +427,7 @@ const CheckoutInner: React.FC = () => {
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
         >
-          <h1 className="text-5xl font-bold text-neutral-800">Checkout</h1>
+          <h1 className="text-3xl md:text-5xl font-bold text-neutral-800">Checkout</h1>
         </motion.div>
 
         <div className="grid lg:grid-cols-3 gap-8">

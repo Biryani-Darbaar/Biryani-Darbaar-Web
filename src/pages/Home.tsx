@@ -12,6 +12,7 @@ import InfoPage from "@/components/sections/InfoSection";
 import { Dish } from "@/types";
 import type { SpecialMediaItem } from "@/apis/media";
 
+
 const Home = () => {
   const [categories, setCategories] = useState<string[]>([]);
 
@@ -58,32 +59,28 @@ const Home = () => {
     return () => clearInterval(intervalId);
   }, [activeCategory]);
 
-  const [specialDishes, setSpecialDishes] = useState<Dish[]>([]);
-  const [mediaItems, setMediaItems]       = useState<SpecialMediaItem[]>([]);
+  const [mediaItems,      setMediaItems]      = useState<SpecialMediaItem[]>([]);
+  const [mediaLoading,    setMediaLoading]    = useState(true);
+  const [mediaError,      setMediaError]      = useState(false);
 
   useEffect(() => {
-    // Fetch admin-uploaded special offer media first; fall back to dishes
+    // Single fetch — no dish fallback; empty state shown when no media uploaded
+    let cancelled = false;
     const fetchMedia = async () => {
+      setMediaLoading(true);
+      setMediaError(false);
       try {
         const data = await mediaAPI.getSpecialOfferMedia();
-        if (data.length > 0) {
-          setMediaItems(data);
-        } else {
-          // No media uploaded — show special offer dishes as before
-          const dishes = await dishesAPI.getSpecialOffers();
-          setSpecialDishes(dishes);
-        }
+        if (!cancelled) setMediaItems(data);
       } catch {
-        try {
-          const dishes = await dishesAPI.getSpecialOffers();
-          setSpecialDishes(dishes);
-        } catch {
-          // silent — empty state shown
-        }
+        if (!cancelled) setMediaError(true);
+      } finally {
+        if (!cancelled) setMediaLoading(false);
       }
     };
 
     fetchMedia();
+    return () => { cancelled = true; };
   }, []);
 
   const navigate = useNavigate();
@@ -95,7 +92,18 @@ const Home = () => {
   return (
     <div className="flex flex-col gap-20 md:gap-28">
       <HeroSection onSearch={handleSearch} />
-      <SpecialOffersSection specialDishes={specialDishes} mediaItems={mediaItems} />
+      <SpecialOffersSection
+        mediaItems={mediaItems}
+        loading={mediaLoading}
+        error={mediaError}
+        onRetry={() => {
+          setMediaError(false);
+          setMediaLoading(true);
+          mediaAPI.getSpecialOfferMedia()
+            .then((d) => { setMediaItems(d); setMediaLoading(false); })
+            .catch(() => { setMediaError(true); setMediaLoading(false); });
+        }}
+      />
       <ServicesSection />
       <MenuCategoriesSection
         categories={categories}
