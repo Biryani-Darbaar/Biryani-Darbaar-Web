@@ -272,7 +272,7 @@ const SpinWheel: React.FC<SpinWheelProps> = ({ isOpen, onClose }) => {
                           +{coinsWon} Coins!
                         </p>
                         <p className="text-sm text-gray-600 mt-0.5">
-                          Worth <span className="font-semibold">${(coinsWon * 0.1).toFixed(2)} AUD</span> off your next order
+                          Worth <span className="font-semibold">${((coinsWon || 0)* 0.1).toFixed(2)} AUD</span> off your next order
                         </p>
                         <div className="mt-2 flex items-center justify-center gap-1 bg-white/70 rounded-full px-3 py-1 w-fit mx-auto">
                           <span className="text-sm">🪙</span>
