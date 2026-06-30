@@ -122,7 +122,7 @@ export interface MenuCategoriesSectionProps {
 }
 
 export interface SpecialOffersSectionProps {
-  specialDishes: import("./common.types").Dish[];
+  mediaItems?: import("../apis/media").SpecialMediaItem[];
   loading?: boolean;
   error?: boolean;
   onRetry?: () => void;
