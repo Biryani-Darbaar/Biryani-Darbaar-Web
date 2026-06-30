@@ -17,14 +17,10 @@ interface WalletContextType {
   lastSpinAt: string | null;
   canSpinToday: boolean;
   isLoadingWallet: boolean;
-  /** Whether to show the spin-wheel popup */
   showSpinWheel: boolean;
   setShowSpinWheel: (v: boolean) => void;
-  /** Re-fetch wallet from the backend */
   refreshWallet: () => Promise<void>;
-  /** Spin the wheel — resolves with result or rejects with error message */
   spin: () => Promise<SpinResult>;
-  /** Redeem coins for a checkout discount */
   redeem: (coins: number) => Promise<RedeemResult>;
 }
 
@@ -43,16 +39,18 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({
 }) => {
   const { user, isAuthenticated } = useAuth();
 
-  const [walletBalance, setWalletBalance] = useState(0);
-  const [lastSpinAt,    setLastSpinAt]    = useState<string | null>(null);
-  const [canSpinToday,  setCanSpinToday]  = useState(false);
+  const [walletBalance,   setWalletBalance]   = useState(0);
+  const [lastSpinAt,      setLastSpinAt]      = useState<string | null>(null);
+  const [canSpinToday,    setCanSpinToday]    = useState(false);
   const [isLoadingWallet, setIsLoadingWallet] = useState(false);
-  const [showSpinWheel, setShowSpinWheel] = useState(false);
+  const [showSpinWheel,   setShowSpinWheel]   = useState(false);
 
-  // Track previous userId so we know when auth state changed
+  // Track the userId that was active on the last fetch so we only re-fetch
+  // when the user actually changes (new login), not on every re-render.
   const prevUserIdRef = useRef<string | null>(null);
 
-  const refreshWallet = useCallback(async () => {
+  // ── Shared fetch helper — used by both the auto-fetch and manual refresh ──
+  const fetchWallet = useCallback(async (): Promise<void> => {
     if (!isAuthenticated) return;
     setIsLoadingWallet(true);
     try {
@@ -61,49 +59,72 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({
       setLastSpinAt(data.lastSpinAt);
       setCanSpinToday(data.canSpinToday);
     } catch {
-      // Non-blocking — wallet data is a nice-to-have, not mission-critical
+      // Non-blocking — wallet is a nice-to-have; never crash the app over it.
     } finally {
       setIsLoadingWallet(false);
     }
   }, [isAuthenticated]);
 
-  // Fetch wallet whenever the authenticated user changes
+  // Public refreshWallet — used by Checkout, spin result handler, etc.
+  const refreshWallet = fetchWallet;
+
+  // ── Auto-fetch on login / user change ─────────────────────────────────────
+  //
+  // Rules:
+  //  • Fetch ONCE per new userId (i.e. when the user logs in for the first
+  //    time in this tab session). Guard with prevUserIdRef so re-renders of
+  //    parent providers don't trigger extra round-trips.
+  //  • Do NOT put `fetchWallet` in the dep array — it recreates whenever
+  //    `isAuthenticated` changes, which would cause a second fetch immediately
+  //    after the first one completes (because setting wallet state changes
+  //    isLoadingWallet, which can trigger parent re-renders).
+  //  • On logout: reset everything synchronously (no network call needed).
+  //
   useEffect(() => {
     const currentId = user?.userId ?? null;
 
-    if (isAuthenticated && currentId) {
-      refreshWallet();
-
-      // Show spin-wheel popup when a new login happens (userId just became set)
-      if (prevUserIdRef.current !== currentId) {
-        // Delay slightly so the page has settled
-        const timer = setTimeout(async () => {
-          try {
-            const data = await walletAPI.getWallet();
-            setWalletBalance(data.walletBalance);
-            setLastSpinAt(data.lastSpinAt);
-            setCanSpinToday(data.canSpinToday);
-            if (data.canSpinToday) {
-              setShowSpinWheel(true);
-            }
-          } catch {
-            // ignore
-          }
-        }, 1500);
-
-        prevUserIdRef.current = currentId;
-        return () => clearTimeout(timer);
-      }
-    } else if (!isAuthenticated) {
-      // Reset wallet state on logout
+    // ── Logout ──
+    if (!isAuthenticated) {
       setWalletBalance(0);
       setLastSpinAt(null);
       setCanSpinToday(false);
       setShowSpinWheel(false);
       prevUserIdRef.current = null;
+      return;
     }
-  }, [isAuthenticated, user?.userId, refreshWallet]);
 
+    // ── Same user, no re-fetch needed ──
+    if (!currentId || prevUserIdRef.current === currentId) return;
+
+    // ── New login — fetch once, then decide whether to show spin wheel ──
+    prevUserIdRef.current = currentId;
+
+    // Small delay (800 ms) so the page has settled before the popup can appear
+    const timer = setTimeout(async () => {
+      if (!isAuthenticated) return; // guard against logout-during-delay
+      setIsLoadingWallet(true);
+      try {
+        const data = await walletAPI.getWallet();
+        setWalletBalance(data.walletBalance);
+        setLastSpinAt(data.lastSpinAt);
+        setCanSpinToday(data.canSpinToday);
+        if (data.canSpinToday) {
+          setShowSpinWheel(true);
+        }
+      } catch {
+        // ignore — wallet failure must never disrupt login flow
+      } finally {
+        setIsLoadingWallet(false);
+      }
+    }, 800);
+
+    return () => clearTimeout(timer);
+
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // NOTE: `fetchWallet` intentionally omitted from deps — see comment above.
+  }, [isAuthenticated, user?.userId]);
+
+  // ── Spin ──────────────────────────────────────────────────────────────────
   const spin = useCallback(async (): Promise<SpinResult> => {
     const result = await walletAPI.spinWheel();
     setWalletBalance(result.walletBalance);
@@ -112,6 +133,7 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({
     return result;
   }, []);
 
+  // ── Redeem ────────────────────────────────────────────────────────────────
   const redeem = useCallback(async (coins: number): Promise<RedeemResult> => {
     const result = await walletAPI.redeemCoins(coins);
     setWalletBalance(result.walletBalance);
