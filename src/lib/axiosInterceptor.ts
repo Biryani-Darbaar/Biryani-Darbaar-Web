@@ -27,6 +27,7 @@ axiosInstance.interceptors.response.use(
     // If response has { success, statusCode, data } structure, return the data
     if (
       response.data &&
+      typeof response.data === "object" &&
       "data" in response.data &&
       "success" in response.data
     ) {
