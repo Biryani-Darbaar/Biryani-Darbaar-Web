@@ -43,6 +43,15 @@ axiosInstance.interceptors.response.use(
 
     // If error is 401 (Unauthorized) and we haven't retried yet
     if (error.response?.status === 401 && !originalRequest._retry) {
+      // No local session to begin with — this request was never authenticated,
+      // so a 401 here doesn't mean "your session expired" (it may be a public
+      // endpoint the backend is wrongly gating). Reject and let the caller's
+      // own error handling deal with it instead of clearing storage and hard
+      // redirecting, which would reload-loop every logged-out visitor.
+      if (!getAccessToken()) {
+        return Promise.reject(error);
+      }
+
       originalRequest._retry = true;
 
       try {
