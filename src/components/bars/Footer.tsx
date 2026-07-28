@@ -73,7 +73,7 @@ const Footer: React.FC = () => {
             >
               <input
                 type="email"
-                placeholder="Enter your email"
+                placeholder="Enter email"
                 className="flex-1 px-4 py-3 w-36 rounded-lg bg-white border border-neutral-300 text-neutral-900 placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
                 required
               />
