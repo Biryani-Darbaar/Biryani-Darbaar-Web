@@ -346,7 +346,7 @@ const SpinWheel: React.FC<SpinWheelProps> = ({ isOpen, onClose }) => {
 
                     <button
                       onClick={handleClose}
-                      className="mt-4 w-full py-3 bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl transition-colors"
+                      className="mt-4 w-full py-3 bg-red-600 hover:bg-red-700 text-white fo nt-bold rounded-xl transition-colors"
                     >
                       {coinsWon === 0 ? "Got It" : "Awesome, Thanks!"}
                     </button>
