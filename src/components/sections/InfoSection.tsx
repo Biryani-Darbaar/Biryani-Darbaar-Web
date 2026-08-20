@@ -18,22 +18,22 @@ const InfoPage: React.FC = () => {
               <strong>Monday:</strong> Closed
             </li>
             <li>
-              <strong>Tuesday:</strong>11:00 AM–10:00 PM
+              <strong>Tuesday:</strong> 11:00 AM–10:00 PM
             </li>
             <li>
-              <strong>Wednesday:</strong>11:00 AM–10:00 PM
+              <strong>Wednesday:</strong> 11:00 AM–10:00 PM
             </li>
             <li>
-              <strong>Thursday:</strong>11:00 AM–10:00 PM
+              <strong>Thursday:</strong> 11:00 AM–10:00 PM
             </li>
             <li>
-              <strong>Friday:</strong>11:00 AM–10:00 PM
+              <strong>Friday:</strong> 11:00 AM–10:00 PM
             </li>
             <li>
-              <strong>Saturday:</strong>11:00 AM–10:00 PM
+              <strong>Saturday:</strong> 11:00 AM–10:00 PM
             </li>
             <li>
-              <strong>Sunday:</strong>11:00 AM–10:00 PM
+              <strong>Sunday:</strong> 11:00 AM–10:00 PM
             </li>
           </ul>
           <p className="mt-6 text-base font-bold text-primary">
@@ -85,25 +85,25 @@ const InfoPage: React.FC = () => {
           </div>
           <ul className="text-base text-neutral-900 space-y-3 leading-relaxed">
             <li>
-              <strong>Monday:</strong>Closed
+              <strong>Monday:</strong> Closed
             </li>
             <li>
-              <strong>Tuesday:</strong>11:00 AM–9:00 PM
+              <strong>Tuesday:</strong> 11:00 AM–9:00 PM
             </li>
             <li>
-              <strong>Wednesday:</strong>11:00 AM–9:00 PM
+              <strong>Wednesday:</strong> 11:00 AM–9:00 PM
             </li>
             <li>
-              <strong>Thursday:</strong>11:00 AM–9:00 PM
+              <strong>Thursday:</strong> 11:00 AM–9:00 PM
             </li>
             <li>
-              <strong>Friday:</strong>11:00 AM–9:00 PM
+              <strong>Friday:</strong> 11:00 AM–9:00 PM
             </li>
             <li>
-              <strong>Saturday:</strong>11:00 AM–9:00 PM
+              <strong>Saturday:</strong> 11:00 AM–9:00 PM
             </li>
             <li>
-              <strong>Sunday:</strong>11:00 AM–9:00 PM
+              <strong>Sunday:</strong> 11:00 AM–9:00 PM
             </li>
           </ul>
         </div>
