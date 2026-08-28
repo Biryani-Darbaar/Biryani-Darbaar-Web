@@ -22,3 +22,15 @@ export const getSpecialOfferMedia = async (): Promise<SpecialMediaItem[]> => {
   if (Array.isArray(inner?.media)) return inner.media; // normal case
   return [];
 };
+
+/**
+ * Fetch menu media items uploaded via the admin panel's Menu Media section.
+ * Public endpoint — no auth required. Shown in the /Menu page carousel.
+ */
+export const getMenuMedia = async (): Promise<SpecialMediaItem[]> => {
+  const response = await axiosInstance.get("/menu-media");
+  const inner = response.data;
+  if (Array.isArray(inner)) return inner;
+  if (Array.isArray(inner?.media)) return inner.media;
+  return [];
+};

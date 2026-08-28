@@ -27,6 +27,15 @@ export interface RegisterModalProps {
 export interface LargeImageViewProps {
   title: string;
   description: string;
+  /**
+   * When provided, replaces the default hardcoded hero carousel images with
+   * these admin-uploaded media items. Pass an empty array (not undefined) to
+   * hide the carousel + rating card entirely when nothing has been uploaded.
+   * Omit this prop to keep the default hardcoded carousel (About/Checkout/Order).
+   */
+  mediaItems?: import("../apis/media").SpecialMediaItem[];
+  /** Overrides the default 3.4 rating shown on the floating review badge. */
+  rating?: number;
 }
 
 export interface ArchedCardProps {

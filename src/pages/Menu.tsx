@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback, useRef } from "react";
 import { useLocation } from "react-router-dom";
-import { categoriesAPI, dishesAPI } from "@/apis";
+import { categoriesAPI, dishesAPI, mediaAPI } from "@/apis";
 import ArchedCard from "@/components/cards/ArchedCard";
 import LargeImageView from "@/components/LargeImageView";
 import InfoPage from "@/components/sections/InfoSection";
@@ -8,6 +8,7 @@ import CustomerReviews from "@/components/sections/CustomerReviewSection";
 import InputSearch from "@/components/InputSearch";
 import Loading from "@/components/Loading";
 import ErrorFallback from "@/components/ErrorFallback";
+import type { SpecialMediaItem } from "@/apis/media";
 
 interface Dish {
   image: string;
@@ -27,6 +28,17 @@ const Menu = () => {
   const [searchQuery, setSearchQuery] = useState<string>("");
   const location = useLocation();
   const categoryBarRef = useRef<HTMLDivElement>(null);
+
+  const [heroMedia, setHeroMedia] = useState<SpecialMediaItem[]>([]);
+
+  useEffect(() => {
+    let cancelled = false;
+    mediaAPI
+      .getMenuMedia()
+      .then((data) => { if (!cancelled) setHeroMedia(data); })
+      .catch(() => { if (!cancelled) setHeroMedia([]); });
+    return () => { cancelled = true; };
+  }, []);
 
   useEffect(() => {
     const fetchCategories = async () => {
@@ -160,6 +172,8 @@ const Menu = () => {
         <LargeImageView
           title="Biryani Darbaar in Athol Park"
           description="Enjoy authentic biryani with fresh ingredients!"
+          mediaItems={heroMedia}
+          rating={4.5}
         />
 
         {/* Search bar */}

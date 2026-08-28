@@ -140,6 +140,8 @@ const SpecialOffer: React.FC = () => {
         <LargeImageView
           title="Special Offers"
           description="Discover our exclusive deals and limited-time promotions on your favourite dishes."
+          mediaItems={mediaItems}
+          rating={4.5}
         />
       </div>
 
