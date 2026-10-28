@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Sparkles, Gift } from "lucide-react";
-import { useWallet } from "@/contexts/WalletContext";
+import { Sparkles, Gift, X, RotateCcw, Coins, HandCoins, Trophy } from "lucide-react";
+import { useWallet, SPIN_DISMISS_KEY, todayKey } from "@/contexts/WalletContext";
 
 // ── Wheel configuration ───────────────────────────────────────────────────────
 
@@ -11,28 +11,28 @@ const SEGMENTS = [
     color: "#9CA3AF",
     darkColor: "#6B7280",
     label: "Try Again",
-    emoji: "😅",
+    icon: RotateCcw,
   },
   {
     coins: 5,
     color: "#60A5FA",
     darkColor: "#3B82F6",
     label: "5 Coins",
-    emoji: "🪙",
+    icon: Coins,
   },
   {
     coins: 10,
     color: "#34D399",
     darkColor: "#10B981",
     label: "10 Coins",
-    emoji: "💰",
+    icon: HandCoins,
   },
   {
     coins: 20,
     color: "#FBBF24",
     darkColor: "#F59E0B",
     label: "20 Coins",
-    emoji: "🏆",
+    icon: Trophy,
   },
 ];
 
@@ -119,15 +119,9 @@ const WheelGraphic: React.FC<{ rotation: number }> = ({ rotation }) => {
         stroke="#E5E7EB"
         strokeWidth={3}
       />
-      <text
-        x={cx}
-        y={cy}
-        textAnchor="middle"
-        dominantBaseline="middle"
-        fontSize={18}
-      >
-        🎰
-      </text>
+      <foreignObject x={cx - 10} y={cy - 10} width={20} height={20}>
+        <Gift size={20} className="text-red-500" />
+      </foreignObject>
     </svg>
   );
 };
@@ -167,11 +161,13 @@ const SpinWheel: React.FC<SpinWheelProps> = ({ isOpen, onClose }) => {
   const [error, setError] = useState("");
   const rotationRef = useRef(0);
 
-  // Block Escape key while popup is open and spin not yet completed
+  // Escape dismisses — except mid-spin, so the result isn't lost
+  const phaseRef = useRef<Phase>("idle");
+  phaseRef.current = phase;
   useEffect(() => {
     if (!isOpen) return;
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") e.preventDefault();
+      if (e.key === "Escape" && phaseRef.current !== "spinning") handleCloseRef.current();
     };
     document.addEventListener("keydown", handleKeyDown, true);
     return () => document.removeEventListener("keydown", handleKeyDown, true);
@@ -211,11 +207,15 @@ const SpinWheel: React.FC<SpinWheelProps> = ({ isOpen, onClose }) => {
   };
 
   const handleClose = () => {
+    if (phaseRef.current === "spinning") return;
+    try { localStorage.setItem(SPIN_DISMISS_KEY, todayKey()); } catch { /* storage unavailable */ }
     setPhase("idle");
     setCoinsWon(null);
     setError("");
     onClose();
   };
+  const handleCloseRef = useRef(handleClose);
+  handleCloseRef.current = handleClose;
 
   const resultSeg =
     coinsWon !== null ? SEGMENTS.find((s) => s.coins === coinsWon) : null;
@@ -224,9 +224,9 @@ const SpinWheel: React.FC<SpinWheelProps> = ({ isOpen, onClose }) => {
     <AnimatePresence>
       {isOpen && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
-          {/* Backdrop — not clickable; user must complete the spin */}
           <motion.div
-            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+            onClick={handleClose}
+            className="absolute inset-0 bg-black/60"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -243,7 +243,15 @@ const SpinWheel: React.FC<SpinWheelProps> = ({ isOpen, onClose }) => {
             {/* Header gradient bar */}
             <div className="h-2 w-full bg-gradient-to-r from-red-500 via-orange-400 to-yellow-400" />
 
-            {/* No close button — spin must be completed to dismiss */}
+            <button
+              type="button"
+              onClick={handleClose}
+              disabled={phase === "spinning"}
+              aria-label="Close daily spin"
+              className="absolute top-4 right-4 p-1.5 rounded-full text-gray-400 hover:text-gray-700 hover:bg-gray-100 disabled:opacity-30 transition-colors"
+            >
+              <X size={18} />
+            </button>
 
             <div className="px-6 pb-8 pt-5 flex flex-col items-center gap-4">
               {/* Title */}
@@ -305,7 +313,7 @@ const SpinWheel: React.FC<SpinWheelProps> = ({ isOpen, onClose }) => {
                   >
                     {coinsWon === 0 ? (
                       <div className="bg-gray-50 rounded-2xl p-4">
-                        <p className="text-3xl mb-1">😅</p>
+                        <RotateCcw size={28} className="mx-auto mb-2 text-gray-400" />
                         <p className="font-bold text-gray-700">
                           No coins this time!
                         </p>
@@ -321,7 +329,7 @@ const SpinWheel: React.FC<SpinWheelProps> = ({ isOpen, onClose }) => {
                           border: `1.5px solid ${resultSeg.color}`,
                         }}
                       >
-                        <p className="text-3xl mb-1">{resultSeg.emoji}</p>
+                        <resultSeg.icon size={30} className="mx-auto mb-2" style={{ color: resultSeg.darkColor }} />
                         <p
                           className="text-2xl font-black"
                           style={{ color: resultSeg.darkColor }}
@@ -407,12 +415,12 @@ const SpinWheel: React.FC<SpinWheelProps> = ({ isOpen, onClose }) => {
                         border: `1px solid ${seg.color}40`,
                       }}
                     >
-                      <span className="text-base">{seg.emoji}</span>
+                      <seg.icon size={16} style={{ color: seg.darkColor }} />
                       <span
                         className="text-xs font-bold"
                         style={{ color: seg.darkColor }}
                       >
-                        {seg.coins === 0 ? "—" : `${seg.coins}🪙`}
+                        {seg.coins === 0 ? "Retry" : `+${seg.coins}`}
                       </span>
                     </div>
                   ))}

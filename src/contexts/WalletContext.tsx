@@ -10,6 +10,10 @@ import { useAuth } from "@/contexts/AuthContext";
 import { walletAPI } from "@/apis";
 import type { SpinResult, RedeemResult } from "@/apis/wallet";
 
+/** Remembered per device so a dismissed spin wheel doesn't reopen on every page load. */
+export const SPIN_DISMISS_KEY = "spinWheelDismissedOn";
+export const todayKey = () => new Date().toDateString();
+
 // ── Context shape ─────────────────────────────────────────────────────────────
 
 interface WalletContextType {
@@ -108,7 +112,11 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({
         setWalletBalance(data.walletBalance);
         setLastSpinAt(data.lastSpinAt);
         setCanSpinToday(data.canSpinToday);
-        if (data.canSpinToday) {
+        // Auto-open once per day per device; a dismissed wheel stays closed
+        // (it can still be opened from the account menu).
+        let dismissedToday = false;
+        try { dismissedToday = localStorage.getItem(SPIN_DISMISS_KEY) === todayKey(); } catch { /* ignore */ }
+        if (data.canSpinToday && !dismissedToday) {
           setShowSpinWheel(true);
         }
       } catch {
