@@ -173,7 +173,6 @@ const Menu = () => {
           title="Biryani Darbaar in Athol Park"
           description="Enjoy authentic biryani with fresh ingredients!"
           mediaItems={heroMedia}
-          rating={4.5}
         />
 
         {/* Search bar */}

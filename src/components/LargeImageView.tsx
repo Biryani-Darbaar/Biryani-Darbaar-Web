@@ -3,6 +3,8 @@ import React, { useState, useEffect } from "react";
 import { Bike, Receipt, Timer } from "lucide-react";
 import { heroImages } from "../contents/Services";
 import { LargeImageViewProps } from "@/types/component.types";
+import StarRating from "./atoms/StarRating";
+import { BUSINESS, reviewCountLabel, todayHoursLabel } from "@/contents/business";
 
 const isVideoUrl = (url: string): boolean =>
   /\.(mp4|webm|mov|ogg)(\?|$)/i.test(url) || url.includes("video");
@@ -11,7 +13,7 @@ const LargeImageView: React.FC<LargeImageViewProps> = ({
   title,
   description,
   mediaItems,
-  rating = 3.4,
+  rating = BUSINESS.rating,
 }) => {
   // When `mediaItems` is passed, it fully controls the carousel — including
   // being hidden entirely (empty array) when nothing has been uploaded yet.
@@ -57,7 +59,6 @@ const LargeImageView: React.FC<LargeImageViewProps> = ({
     }),
   };
 
-  const filledStars = Math.floor(rating);
 
   return (
     <div className="w-full bg-yellow-100 rounded-lg border p-6 md:p-12">
@@ -76,17 +77,17 @@ const LargeImageView: React.FC<LargeImageViewProps> = ({
             <div className="flex flex-wrap gap-3">
               <div className="flex items-center gap-2 bg-gray-900 text-white px-4 py-3 rounded-full">
                 <Receipt className="w-5 h-5" />
-                <span className="font-medium">Minimum Order:25 AUD</span>
+                <span className="font-medium">Minimum order ${BUSINESS.minOrder}</span>
               </div>
               <div className="flex items-center gap-2 bg-gray-900 text-white px-4 py-3 rounded-full">
                 <Bike className="w-5 h-5" />
-                <span className="font-medium">Delivery in 20-25 Minutes</span>
+                <span className="font-medium">Delivery in {BUSINESS.deliveryEta}</span>
               </div>
             </div>
 
             {/* Open Status */}
             <motion.div
-              className="flex items-center justify-start bg-primary bg-opacity-10 rounded-2xl w-fit p-4 h-7 mt-2"
+              className="flex items-center justify-start bg-primary/10 rounded-full w-fit py-1.5 pl-1.5 pr-4 mt-2"
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
               transition={{ duration: 0.4, ease: "easeInOut" }}
@@ -95,7 +96,7 @@ const LargeImageView: React.FC<LargeImageViewProps> = ({
                 <Timer className="w-3 h-3 text-white" />
               </div>
               <div className="text-black text-xs font-medium">
-                Open until 3:00 AM
+                {todayHoursLabel()}
               </div>
             </motion.div>
           </div>
@@ -104,24 +105,18 @@ const LargeImageView: React.FC<LargeImageViewProps> = ({
           {!hideCarousel && (
             <div className="relative">
               {/* Rating Badge */}
-              <div className="absolute -top-4 -right-4 z-10 bg-white rounded-2xl shadow-xl p-6 text-center">
-                <div className="text-5xl font-bold text-gray-900 mb-1">
+              <a
+                href={BUSINESS.googleReviewsUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="absolute -top-4 -right-2 sm:-right-4 z-10 bg-white rounded-2xl shadow-[0_12px_30px_-10px_rgba(0,0,0,0.35)] px-4 py-3 sm:px-6 sm:py-5 text-center hover:-translate-y-0.5 transition-transform"
+              >
+                <div className="text-4xl sm:text-5xl font-bold text-gray-900 mb-1 tabular-nums">
                   {rating}
                 </div>
-                <div className="flex gap-1 mb-2 justify-center">
-                  {[...Array(filledStars)].map((_, i) => (
-                    <span key={i} className="text-yellow-400 text-xl">
-                      ★
-                    </span>
-                  ))}
-                  {[...Array(5 - filledStars)].map((_, i) => (
-                    <span key={i} className="text-gray-300 text-xl">
-                      ★
-                    </span>
-                  ))}
-                </div>
-                <div className="text-sm text-gray-600">1,360 reviews</div>
-              </div>
+                <StarRating rating={rating} size={18} className="mb-1.5 justify-center" />
+                <div className="text-xs sm:text-sm text-gray-600">{reviewCountLabel}</div>
+              </a>
 
               {/* Carousel */}
               <motion.div
