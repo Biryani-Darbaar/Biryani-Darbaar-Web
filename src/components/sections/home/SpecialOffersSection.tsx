@@ -72,17 +72,15 @@ const MediaItem: React.FC<MediaItemProps> = ({ item, index }) => {
       {/* Hover gradient */}
       <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
 
-      {/* Badge */}
-      <div className="absolute top-3 left-3">
-        <span className="inline-flex items-center gap-1.5 bg-black/60 backdrop-blur-sm text-white text-xs font-semibold px-2.5 py-1 rounded-full">
-          {isVid ? (
-            <>
-              <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
-              Video
-            </>
-          ) : "Image"}
-        </span>
-      </div>
+      {/* Video indicator (images need no label) */}
+      {isVid && (
+        <div className="absolute top-3 left-3">
+          <span className="inline-flex items-center gap-1.5 bg-black/60 text-white text-xs font-semibold px-2.5 py-1 rounded-full">
+            <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
+            Video
+          </span>
+        </div>
+      )}
     </motion.div>
   );
 };
