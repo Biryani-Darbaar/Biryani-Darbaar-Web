@@ -1,19 +1,30 @@
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import InputSearch from "@/components/InputSearch";
 import RedButton from "@/components/atoms/RedButton";
 import RedWhip from "@/components/atoms/RedWhip";
-import { Smile, Star } from "lucide-react";
+import { Smile } from "lucide-react";
 import { HeroSectionProps } from "@/types";
+import { dishesAPI } from "@/apis";
+import StarRating from "@/components/atoms/StarRating";
+import AppStoreBadges from "@/components/AppStoreBadges";
+import { BUSINESS, reviewCountLabel } from "@/contents/business";
 
 const HeroSection: React.FC<HeroSectionProps> = ({ onSearch }) => {
+    // Live price for the featured dish so the hero never advertises a stale price
+    const [biryaniPrice, setBiryaniPrice] = useState<number | null>(null);
+    useEffect(() => {
+        dishesAPI.getDishesByCategory("Biryani")
+            .then((dishes) => {
+                const d = dishes.find((x) => /^chicken biryani$/i.test((x.dishName ?? x.name ?? "").trim()));
+                if (d) setBiryaniPrice(Number(d.price));
+            })
+            .catch(() => {});
+    }, []);
+
     return (
-        <motion.div
-            className="relative min-h-screen flex items-center justify-center overflow-hidden w-full pt-12"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.6, ease: "easeOut" }}
-        >
+        <div className="relative min-h-screen flex items-center justify-center overflow-hidden w-full pt-12">
             <div
                 className="absolute inset-0 max-h-screen"
                 style={{
@@ -25,41 +36,25 @@ const HeroSection: React.FC<HeroSectionProps> = ({ onSearch }) => {
             />
             {/* Content Container */}
             <div className="container-custom section-spacing">
-                <div className="w-full flex flex-col md:flex-row items-center justify-between gap-8">
+                <div className="w-full flex flex-col lg:flex-row items-center justify-between gap-8">
                     {/* Left side content */}
-                    <motion.div
-                        className="w-full md:w-1/2 text-center md:text-left z-20"
-                        initial={{ opacity: 0, x: -100 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ duration: 0.8 }}
-                    >
-                        <motion.div className="text-left text-4xl md:text-6xl font-extrabold">
-                            <div>
-                                Experience The <br /> Ultimate Taste Best
-                            </div>
-                            <div>
-                                <span className="text-primary">
-                                    Biryani In Adelaide
-                                </span>
-                            </div>
-                        </motion.div>
+                    {/* Visible from first paint: this column holds the LCP headline */}
+                    <div className="w-full lg:w-1/2 text-center lg:text-left z-20">
+                        <h1 className="text-[2.5rem] leading-[1.05] sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-balance">
+                            Experience the Ultimate Taste
+                            <span className="block text-primary mt-1">Best Biryani in Adelaide</span>
+                        </h1>
 
-                        <RedWhip className="md:ml-80 mt-2" />
+                        <RedWhip className="hidden lg:block lg:ml-80 mt-2" />
 
-                        <motion.div
-                            className="text-left text-2xl font-semibold md:text-3xl mt-6"
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            transition={{ delay: 0.5 }}
+                        <div
+                            className="text-2xl font-semibold md:text-3xl mt-6"
                         >
                             Specializing in Mughlai Cuisine
-                        </motion.div>
+                        </div>
 
-                        <motion.div
-                            className="flex items-center justify-start bg-primary bg-opacity-10 rounded-2xl w-fit p-4 h-7 mt-2"
-                            initial={{ scale: 0 }}
-                            animate={{ scale: 1 }}
-                            transition={{ duration: 0.4, ease: "easeInOut" }}
+                        <div
+                            className="flex items-center bg-primary/10 rounded-full w-fit py-1.5 pl-1.5 pr-4 mt-3 mx-auto lg:mx-0"
                         >
                             <div className="flex items-center justify-center bg-primary rounded-full w-5 h-5 mr-3">
                                 <svg
@@ -78,75 +73,77 @@ const HeroSection: React.FC<HeroSectionProps> = ({ onSearch }) => {
                             <div className="text-black text-xs font-medium">
                                 Trusted by food lovers across Adelaide
                             </div>
-                        </motion.div>
+                        </div>
 
-                        <motion.div className="mt-3">
+                        <div className="mt-3">
                             <InputSearch placeholder="Explore our Delicacies" onSearch={onSearch} />
-                        </motion.div>
+                        </div>
 
-                        <motion.div
-                            className="flex flex-wrap justify-center md:justify-start items-center gap-4 mt-4"
-                            initial={{ opacity: 0, scale: 0.8 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            transition={{ duration: 0.6 }}
+                        <div
+                            className="flex flex-wrap justify-center lg:justify-start items-center gap-4 mt-4"
                         >
-                            <Link to="/Order">
+                            <Link to="/Order" className="w-full sm:w-auto">
                                 <RedButton
-                                    className="h-12 w-fit flex font-semibold"
+                                    className="h-12 w-full sm:w-fit flex items-center justify-center font-semibold"
                                     image="/assets/icons/order.png"
                                     alt="Biryani Darbaar - Order"
                                     name="Order Food"
                                     variant="active"
                                 />
                             </Link>
-                            <Link to="/Contact">
+                            <Link to="/Contact" className="w-full sm:w-auto">
                                 <RedButton
-                                    className="h-12 w-fit flex font-semibold"
+                                    className="h-12 w-full sm:w-fit flex items-center justify-center font-semibold"
                                     image="/assets/icons/catering.png"
                                     alt="Biryani Darbaar - Catering"
                                     name="Book Catering Services"
                                     variant="active"
                                 />
                             </Link>
-                        </motion.div>
-
-                        <div className="flex justify-start items-center gap-4 mt-8">
-                            {/* TODO */}
-                            <img className="w-40" src="/assets/images/play-store.png" alt="Biryani Darbaar - Download on Android" />
-                            <img className="w-40" src="/assets/images/app-store.png" alt="Biryani Darbaar - Download on iOS" />
                         </div>
-                    </motion.div>
+
+                        <AppStoreBadges className="items-center lg:items-start mt-8" />
+                    </div>
 
                     {/* Right side content */}
                     <motion.div
-                        className="hidden md:flex md:w-1/2 items-center justify-end relative"
+                        className="hidden lg:flex lg:w-1/2 items-center justify-end relative"
                         initial={{ opacity: 0, x: 100 }}
                         animate={{ opacity: 1, x: 0 }}
                         transition={{ duration: 0.8 }}
                     >
                         <div className="relative">
                             {/* Happy Customer Badge */}
-                            <div className="absolute top-0 right-0 w-fit gap-2 h-fit py-2 bg-white rounded-3xl flex items-center justify-between px-4 border border-neutral-200 z-30">
-                                {/* Use Smile from lucide-react */}
-                                <Smile className="w-9 h-9 text-yellow-400 mr-2" />
+                            <a
+                                href={BUSINESS.googleReviewsUrl}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="absolute top-0 right-0 gap-3 py-2.5 pl-3 pr-4 bg-white rounded-2xl flex items-center shadow-[0_10px_25px_-12px_rgba(0,0,0,0.35)] z-30 hover:-translate-y-0.5 transition-transform"
+                            >
+                                <Smile className="w-9 h-9 text-amber-400 shrink-0" />
                                 <div className="flex flex-col">
-                                    <div className="text-xs font-semibold">Our Happy Customer</div>
-                                    <div className="flex items-center">
-                                        <Star className="h-3 w-3 text-yellow-500" fill="currentColor" />
-                                        <span className="text-xs ml-1">4.9</span>
-                                        <span className="text-xs ml-1">(1989 Reviews)</span>
+                                    <div className="text-xs font-semibold">Our Happy Customers</div>
+                                    <div className="flex items-center gap-1.5 mt-0.5">
+                                        <span className="text-sm font-bold tabular-nums">{BUSINESS.rating}</span>
+                                        <StarRating rating={BUSINESS.rating} size={12} />
                                     </div>
+                                    <div className="text-[11px] text-neutral-500">{reviewCountLabel}</div>
                                 </div>
-                            </div>
+                            </a>
 
                             {/* Chicken Biryani Card */}
-                            <div className="absolute -left-20 top-16 w-48 bg-white h-14 flex items-center rounded-lg border border-neutral-200 z-30">
-                                <img className="w-10 ml-2" src="/assets/icons/biryani.png" alt="Biryani Darbaar" />
-                                <div className="flex flex-col ml-2">
-                                    <span className="text-xs font-bold">Chicken Biryani</span>
-                                    <div className="text-md font-medium text-red-700">@ Just $9.50</div>
-                                </div>
-                            </div>
+                            {biryaniPrice !== null && (
+                                <Link
+                                    to="/Order"
+                                    className="absolute -left-20 top-16 bg-white flex items-center gap-2.5 py-2 pl-2 pr-4 rounded-2xl shadow-[0_10px_25px_-12px_rgba(0,0,0,0.35)] z-30 hover:-translate-y-0.5 transition-transform"
+                                >
+                                    <img className="w-10" src="/assets/icons/biryani.png" alt="" />
+                                    <div className="flex flex-col">
+                                        <span className="text-xs font-bold">Chicken Biryani</span>
+                                        <span className="text-sm font-semibold text-primary tabular-nums">${biryaniPrice.toFixed(2)}</span>
+                                    </div>
+                                </Link>
+                            )}
 
                             {/* Girl Image with Circle */}
                             <div className="w-[410px] h-[410px] rounded-full bg-primary overflow-hidden relative z-20">
@@ -193,7 +190,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({ onSearch }) => {
                     </motion.div>
                 </div>
             </div>
-        </motion.div>
+        </div>
     );
 };
 

@@ -1,3 +1,5 @@
+import AppStoreBadges from "@/components/AppStoreBadges";
+
 
 const MobileAppSection: React.FC = () => {
     return (
@@ -6,18 +8,15 @@ const MobileAppSection: React.FC = () => {
                 {/* Left Content */}
                 <div className="w-full md:w-1/2">
                     <h2 className="text-4xl md:text-5xl font-bold text-center md:text-left">
-                        Ordering is now <span className="text-primary">Easier</span> with <span className="text-primary">Biryani Darbar App</span><br className="hidden md:block" />
+                        Ordering is now <span className="text-primary">Easier</span> with <span className="text-primary">Biryani Darbaar App</span><br className="hidden md:block" />
                     </h2>
 
                     <p className="mt-6 text-base md:text-lg text-neutral-600 text-center md:text-left">
-                        Download our app, browse the full menu, and place your order in seconds.
+                        Our app is on its way — browse the full menu and order in seconds.
                         Choose pickup or delivery and track your order in real time.
                     </p>
 
-                    <div className="flex items-center justify-center md:justify-start gap-4 mt-8">
-                        <img className="w-40" src="/assets/images/play-store.png" alt="Biryani Darbaar - Download on Android" />
-                        <img className="w-40" src="/assets/images/app-store.png" alt="Biryani Darbaar - Download on iOS" />
-                    </div>
+                    <AppStoreBadges className="items-center md:items-start mt-8" />
                 </div>
                 <div className="hidden md:block left-8 relative md:w-1/2">
                     <img src="/assets/images/mobileappchef.png" alt="Biryani Darbaar - Mobile App" className="w-full h-auto" />
