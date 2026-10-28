@@ -9,6 +9,7 @@ import {
     validateName,
     validateEmail,
     validatePhoneNumber,
+    normalizeAustralianPhone,
     validateMessage,
 } from '@/utils/validation';
 
@@ -69,7 +70,7 @@ const Contact: React.FC = () => {
         setIsSubmitting(true);
 
         try {
-            await contactAPI.submitContactForm(formData);
+            await contactAPI.submitContactForm({ ...formData, phoneNumber: normalizeAustralianPhone(formData.phoneNumber) });
 
             toast.success('Message sent successfully! We\'ll get back to you soon.');
 
@@ -185,7 +186,7 @@ const Contact: React.FC = () => {
                                 required
                                 disabled={isSubmitting}
                                 className="w-full px-4 py-3 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
-                                placeholder="0412345678"
+                                placeholder="04XX XXX XXX"
                             />
                         </motion.div>
 

@@ -27,7 +27,7 @@ type FormData = {
   lastName: string;
   email: string;
   password: string;
-  /** Local part of the AU phone number (without +61 prefix) */
+  /** AU mobile number, 04XX XXX XXX */
   phoneNumber: string;
   address: string;
 };
@@ -205,8 +205,7 @@ const RegisterModal: React.FC<RegisterModalProps> = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Build the full phone number for validation (prefix + local)
-    const fullPhone = `+61${formData.phoneNumber.replace(/\s+/g, "")}`;
+    const fullPhone = formData.phoneNumber;
 
     const firstNameError = validateName(formData.firstName, "First name");
     const lastNameError = validateName(formData.lastName, "Last name");
@@ -251,7 +250,7 @@ const RegisterModal: React.FC<RegisterModalProps> = ({
         lastName: formData.lastName,
         email: formData.email,
         password: formData.password,
-        // Normalize to E.164 — backend also normalises as defence-in-depth
+        // Normalise to 04XXXXXXXX — backend also normalises as defence-in-depth
         phoneNumber: normalizeAustralianPhone(fullPhone),
         address: formData.address.trim(),
       });
@@ -351,33 +350,24 @@ const RegisterModal: React.FC<RegisterModalProps> = ({
                 />
               </div>
 
-              {/* ── Task 4: AU Phone with fixed +61 prefix ── */}
+              {/* ── AU mobile, 04XX XXX XXX (format required by the POS) ── */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Phone Number *
+                  Mobile Number *
                 </label>
-                <div className="flex rounded-lg border border-gray-300 overflow-hidden focus-within:ring-2 focus-within:ring-red-500 focus-within:border-transparent transition-all">
-                  {/* Fixed prefix — non-editable */}
-                  <div className="flex items-center gap-1.5 px-3 py-3 bg-gray-50 border-r border-gray-300 select-none flex-shrink-0">
-                    <span className="text-lg leading-none">🇦🇺</span>
-                    <span className="text-sm font-semibold text-gray-700">
-                      +61
-                    </span>
-                  </div>
-                  {/* Local number input */}
-                  <input
-                    name="phoneNumber"
-                    type="tel"
-                    value={formData.phoneNumber}
-                    onChange={handleChange}
-                    placeholder="412 345 678"
-                    autoComplete="tel-national"
-                    className="flex-1 px-3 py-3 bg-white outline-none text-gray-900 placeholder-gray-400 disabled:opacity-60"
-                    disabled={isLoading}
-                  />
-                </div>
+                <input
+                  name="phoneNumber"
+                  type="tel"
+                  inputMode="numeric"
+                  value={formData.phoneNumber}
+                  onChange={handleChange}
+                  placeholder="04XX XXX XXX"
+                  autoComplete="tel-national"
+                  className="w-full px-3 py-3 rounded-lg border border-gray-300 bg-white outline-none text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all disabled:opacity-60"
+                  disabled={isLoading}
+                />
                 <p className="mt-1 text-xs text-gray-400">
-                  Mobile: 4XX XXX XXX · Landline: 2/3/7/8 XXXX XXXX
+                  Australian mobile, e.g. 0412 345 678
                 </p>
               </div>
 
