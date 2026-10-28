@@ -15,7 +15,7 @@ const ServicesSection: React.FC = () => {
                         </h2>
 
                         <p className="mt-6 text-base md:text-lg text-neutral-600 text-center md:text-left">
-                            At Biryani Darbar, we pride ourselves on being more than just a
+                            At Biryani Darbaar, we pride ourselves on being more than just a
                             restaurant. We are a culinary destination that offers a diverse
                             range of services to cater to your every need. From our exquisite
                             catering services to our personalized dining experiences, we go

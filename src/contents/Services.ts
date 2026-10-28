@@ -7,9 +7,9 @@ export const services: Service[] = [
     alt: "Biryani Darbaar - Online Order",
   },
   {
-    name: "24/7 Services",
-    image: "/assets/icons/24_7Services.svg",
-    alt: "Biryani Darbaar - 24/7 Services",
+    name: "Catering Services",
+    image: "/assets/icons/Catering_Services.svg",
+    alt: "",
   },
   {
     name: "Pre-Reservations",
