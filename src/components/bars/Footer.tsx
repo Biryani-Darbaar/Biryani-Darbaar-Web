@@ -1,7 +1,8 @@
-import React, { FormEvent } from "react";
+import React from "react";
 import { Link } from "react-router-dom";
-import { Instagram, Mail, Phone, LucideIcon } from "lucide-react";
+import { Instagram, Mail, Phone, MapPin, ArrowUpRight, LucideIcon } from "lucide-react";
 import { footerLinks, socialLinks } from "../../contents/FooterLinks";
+import { BUSINESS, todayHoursLabel } from "../../contents/business";
 
 const iconMap: Record<"instagram" | "mail" | "phone", LucideIcon> = {
   instagram: Instagram,
@@ -10,10 +11,6 @@ const iconMap: Record<"instagram" | "mail" | "phone", LucideIcon> = {
 };
 
 const Footer: React.FC = () => {
-  const handleNewsletterSubmit = (e: FormEvent<HTMLFormElement>): void => {
-    e.preventDefault();
-  };
-
   return (
     <footer className="bg-[#f4c145] text-neutral-900 border-t border-neutral-200">
       <div className="container-custom py-16">
@@ -60,30 +57,31 @@ const Footer: React.FC = () => {
           </div>
 
           <div className="text-center md:text-left">
-            <h4 className="text-xl font-bold mb-6 text-primary">
-              Stay Connected
-            </h4>
-            <p className="text-neutral-600 mb-6 leading-relaxed">
-              Subscribe to our newsletter for exclusive updates, delicious
-              recipes, and special promotions delivered straight to your inbox.
-            </p>
-            <form
-              className="flex flex-col sm:flex-row gap-3"
-              onSubmit={handleNewsletterSubmit}
-            >
-              <input
-                type="email"
-                placeholder="Enter email"
-                className="flex-1 px-4 py-3 w-36 rounded-lg bg-white border border-neutral-300 text-neutral-900 placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-                required
-              />
-              <button
-                type="submit"
-                className="px-6 py-3 bg-primary text-white font-medium rounded-lg hover:bg-red-600 transition-colors border border-primary"
-              >
-                Subscribe
-              </button>
-            </form>
+            <h4 className="text-xl font-bold mb-6 text-primary">Visit Us</h4>
+            <address className="not-italic space-y-3 text-neutral-900">
+              <p className="font-semibold">{todayHoursLabel()}</p>
+              <p className="flex items-start justify-center md:justify-start gap-2">
+                <MapPin size={18} className="text-primary mt-0.5 shrink-0" />
+                <span>
+                  {BUSINESS.street}, {BUSINESS.suburb}
+                </span>
+              </p>
+              <p>
+                <a href={BUSINESS.phoneHref} className="inline-flex items-center gap-2 font-medium hover:text-primary transition-colors">
+                  <Phone size={18} className="text-primary" /> {BUSINESS.phoneDisplay}
+                </a>
+              </p>
+              <p>
+                <a
+                  href={BUSINESS.googleReviewsUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center gap-1 font-semibold text-primary hover:gap-2 transition-all"
+                >
+                  Get directions <ArrowUpRight size={16} />
+                </a>
+              </p>
+            </address>
           </div>
         </div>
       </div>
