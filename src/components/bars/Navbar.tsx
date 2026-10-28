@@ -168,7 +168,7 @@ const Navbar: React.FC = () => {
           <Link to="/" className="flex items-center">
             <img
               src="/assets/images/logo.png"
-              alt="Biryani Darbaar - Logo"
+              alt="Biryani Darbaar — home"
               className="h-[165px] w-auto object-contain relative -top-4"
             />
           </Link>
@@ -309,6 +309,8 @@ const Navbar: React.FC = () => {
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              aria-label={isMobileMenuOpen ? "Close menu" : "Open menu"}
+              aria-expanded={isMobileMenuOpen}
               className="lg:hidden p-2 rounded-md text-neutral-600 hover:text-red-600 hover:bg-red-50 transition-colors"
             >
               {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
@@ -325,7 +327,7 @@ const Navbar: React.FC = () => {
             animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
             transition={{ duration: 0.3 }}
-            className="lg:hidden bg-white/90 backdrop-blur-md border-t border-neutral-200 shadow-lg"
+            className="lg:hidden bg-white border-t border-neutral-200 shadow-[0_16px_30px_-12px_rgba(0,0,0,0.25)]"
           >
             <div className="container-custom py-4 space-y-2">
               {navbarLinks.map((link) => (
