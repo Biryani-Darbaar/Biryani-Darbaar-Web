@@ -77,7 +77,7 @@ const Navbar: React.FC = () => {
       isActive(path)
         ? "text-red-600 font-semibold after:scale-x-100"
         : "text-neutral-700 hover:text-red-600 after:scale-x-0 hover:after:scale-x-100"
-    } relative px-4 py-2 text-lg font-medium after:absolute after:bottom-0 after:left-0 after:w-full after:h-0.5 after:bg-red-600 after:transform transition-all duration-300`;
+    } relative whitespace-nowrap px-3 xl:px-4 py-2 text-base xl:text-lg font-medium after:absolute after:bottom-0 after:left-0 after:w-full after:h-0.5 after:bg-red-600 after:transform transition-all duration-300`;
 
   const getMobileNavClass = (path: string): string =>
     `block py-3 px-4 rounded-lg text-base font-medium transition-colors ${
@@ -174,7 +174,7 @@ const Navbar: React.FC = () => {
           </Link>
 
           {/* Desktop Navigation */}
-          <div className="hidden lg:flex items-center space-x-8 text-neutral-900">
+          <div className="hidden lg:flex items-center gap-1 xl:gap-4 text-neutral-900">
             {navbarLinks.map((link) => (
               <Link
                 key={link.path}
