@@ -150,6 +150,7 @@ export const ActiveOrderProvider: React.FC<{ children: React.ReactNode }> = ({
   );
 
   const unsubRef      = useRef<Unsubscribe | null>(null);
+  const posLoggedRef  = useRef<string | null>(null);
   const clearTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // ── Persist to localStorage ───────────────────────────────────────────────
@@ -206,6 +207,19 @@ export const ActiveOrderProvider: React.FC<{ children: React.ReactNode }> = ({
 
           const data      = snapshot.data();
           const newStatus = data?.orderStatus as TrackingStatus | undefined;
+
+          // Breadcrumb: the server pushes the order to the Metrics ERP POS in
+          // the background; log once when that finishes (either way).
+          const pos = data?.posSync;
+          const posKey = `${orderId}:${pos?.status}`;
+          if (pos && pos.status !== "pending" && posLoggedRef.current !== posKey) {
+            posLoggedRef.current = posKey;
+            if (pos.status === "synced") {
+              console.log(`[POS] Order ${orderId} sent to POS successfully — POS order #${pos.posOrderId}`);
+            } else if (pos.status === "failed") {
+              console.warn(`[POS] Order ${orderId} could not be sent to the POS yet: ${pos.lastError ?? "unknown error"}`);
+            }
+          }
 
           if (!newStatus) return;
 
