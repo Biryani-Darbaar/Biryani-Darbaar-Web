@@ -19,6 +19,7 @@ const stripePromise = loadStripe(
 
 interface OrderItem {
   cartItemId: string;
+  dishId?: string;
   name: string;
   quantity: number;
   price: number;
@@ -78,6 +79,7 @@ const Checkout: React.FC<CheckoutProps> = ({
           address: user.data.address,
           orderItems: order.map((orderItem) => ({
             cartItemId: orderItem.cartItemId,
+            dishId: orderItem.dishId ?? "",
             name: orderItem.name,
             quantity: orderItem.quantity,
             price: orderItem.price,

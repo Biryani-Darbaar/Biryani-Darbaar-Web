@@ -23,6 +23,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useWallet } from "@/contexts/WalletContext";
 import { paymentAPI, ordersAPI, promoAPI } from "@/apis";
 import toast from "react-hot-toast";
+import { validatePhoneNumber, normalizeAustralianPhone } from "@/utils/validation";
 import AddressAutocomplete, {
   AddressResult,
 } from "@/components/AddressAutocomplete";
@@ -54,8 +55,9 @@ const CheckoutInner: React.FC = () => {
   const [shippingMethod, setShippingMethod] = useState<"delivery" | "pickup">("delivery");
   const [formData, setFormData] = useState({
     fullName: user ? `${user.firstName} ${user.lastName}` : "",
-    phone:    user?.phoneNumber || "",
+    phone:    user?.phoneNumber ? normalizeAustralianPhone(user.phoneNumber) : "",
   });
+  const [instructions, setInstructions] = useState("");
 
   // ── Address ─────────────────────────────────────────────────────────────
   const [houseNo,         setHouseNo]         = useState("");
@@ -85,7 +87,7 @@ const CheckoutInner: React.FC = () => {
       setFormData((prev) => ({
         ...prev,
         fullName: prev.fullName || `${user.firstName} ${user.lastName}`,
-        phone:    prev.phone    || user.phoneNumber,
+        phone:    prev.phone    || (user.phoneNumber ? normalizeAustralianPhone(user.phoneNumber) : ""),
       }));
     }
   }, [user]);
@@ -240,10 +242,12 @@ const CheckoutInner: React.FC = () => {
       toast.error("Please enter your full name.");
       return;
     }
-    if (!formData.phone.trim()) {
-      toast.error("Please enter your phone number.");
+    const phoneError = validatePhoneNumber(formData.phone);
+    if (phoneError) {
+      toast.error(phoneError);
       return;
     }
+    const phone = normalizeAustralianPhone(formData.phone);
     if (shippingMethod === "delivery" && !selectedAddress) {
       toast.error("Please select a delivery address from the suggestions.");
       return;
@@ -277,7 +281,7 @@ const CheckoutInner: React.FC = () => {
             card: cardElement,
             billing_details: {
               name:  formData.fullName,
-              phone: formData.phone,
+              phone,
             },
           },
         });
@@ -304,10 +308,11 @@ const CheckoutInner: React.FC = () => {
       const orderPayload = {
         userId:         user.userId,
         userName:       `${user.firstName} ${user.lastName}`,
-        phoneNumber:    formData.phone,
+        phoneNumber:    phone,
         address:        deliveryAddress,
         orderItems:     cartItems.map((item) => ({
           cartItemId: item.cartItemId,
+          dishId:     item.dishId,
           name:       item.name,
           quantity:   item.quantity,
           price:      item.price,
@@ -318,6 +323,7 @@ const CheckoutInner: React.FC = () => {
         // Coin fields — backend validates and deducts these atomically
         coinsUsed:      coinsToUse  > 0 ? coinsToUse      : 0,
         coinDiscount:   coinDiscountAmt > 0 ? coinDiscountAmt : 0,
+        instructions:   instructions.trim(),
       };
 
       // ── Step 4: Create order (backend validates coins + deducts atomically) ─
@@ -509,8 +515,10 @@ const CheckoutInner: React.FC = () => {
                     value={formData.phone}
                     onChange={handleInputChange}
                     className="w-full px-4 py-3 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"
-                    placeholder="Enter your phone number"
+                    inputMode="numeric"
+                    placeholder="04XX XXX XXX"
                   />
+                  <p className="mt-1 text-xs text-neutral-400">Australian mobile, e.g. 0412 345 678</p>
                 </div>
               </div>
             </div>
@@ -537,6 +545,25 @@ const CheckoutInner: React.FC = () => {
                 />
               </motion.div>
             )}
+
+            {/* Order instructions — forwarded to the kitchen via the POS */}
+            <div className="bg-white rounded-2xl p-6 border border-neutral-200">
+              <label htmlFor="order-instructions" className="block text-xl font-semibold mb-1 text-neutral-800">
+                Order Instructions <span className="text-sm font-normal text-neutral-400">(optional)</span>
+              </label>
+              <p className="text-sm text-neutral-500 mb-3">Allergies, spice level, anything the kitchen should know.</p>
+              <textarea
+                id="order-instructions"
+                value={instructions}
+                onChange={(e) => setInstructions(e.target.value)}
+                maxLength={500}
+                rows={3}
+                disabled={isLoading}
+                className="w-full px-4 py-3 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all resize-none"
+                placeholder="e.g. Extra spicy, no onions"
+              />
+              <p className="mt-1 text-right text-xs text-neutral-400">{instructions.length}/500</p>
+            </div>
           </motion.div>
 
           {/* ── Right: Order Summary ─────────────────────────────────────── */}

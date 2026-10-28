@@ -178,6 +178,8 @@ export interface CreateOrderData {
   address: string;
   orderItems: {
     cartItemId: string;
+    /** Server resolves the dish's POS Item ID/Name from this */
+    dishId: string;
     name: string;
     quantity: number;
     price: number;
@@ -191,10 +193,18 @@ export interface CreateOrderData {
   coinsUsed?: number;
   /** AUD discount applied from coins (coinsUsed * 0.10) */
   coinDiscount?: number;
+  /** Customer's order instructions — forwarded to the POS docket */
+  instructions?: string;
 }
 
 export interface CreateOrderResponse {
   orderId: string;
+  /** Result of pushing the order to the Metrics ERP POS */
+  posSync?: {
+    status: "synced" | "failed" | "pending" | "disabled" | "in_progress";
+    posOrderId?: number | string;
+    lastError?: string;
+  };
 }
 
 // ============================================================================
