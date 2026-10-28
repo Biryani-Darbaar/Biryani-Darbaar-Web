@@ -1,34 +1,21 @@
 import React from "react";
+import { MapPin, ArrowUpRight } from "lucide-react";
 import UnifiedSlider from "../UnifiedSlider";
-import { reviews, ratingStats } from "../../contents/Reviews";
+import StarRating from "../atoms/StarRating";
+import { reviews } from "../../contents/Reviews";
+import { BUSINESS, reviewCountLabel } from "../../contents/business";
 import { Review } from "@/types/common.types";
 
 interface SliderItem {
     content: React.ReactNode;
 }
 
-const StarRow: React.FC<{ rating: number; size?: string }> = ({
-    rating,
-    size = "text-lg",
-}) => (
-    <div className="flex gap-0.5">
-        {[1, 2, 3, 4, 5].map((star) => (
-            <span
-                key={star}
-                className={`${size} ${star <= rating ? "text-yellow-400" : "text-neutral-300"}`}
-            >
-                ★
-            </span>
-        ))}
-    </div>
-);
-
 const CustomerReviews: React.FC = () => {
     const sliderItems: SliderItem[] = reviews.map((review: Review) => ({
         content: (
             <div className="w-full bg-white p-6 rounded-xl border border-neutral-200 hover:border-red-200 hover:shadow-lg transition-all duration-300 flex flex-col gap-3 h-full">
                 {/* Stars */}
-                <StarRow rating={review.rating} />
+                <StarRating rating={review.rating} size={18} />
 
                 {/* Review text */}
                 <p className="text-neutral-700 text-sm leading-relaxed line-clamp-5 flex-1">
@@ -39,15 +26,15 @@ const CustomerReviews: React.FC = () => {
                 <div className="pt-3 border-t border-neutral-100">
                     <p className="font-bold text-neutral-900 text-base">{review.name}</p>
                     <div className="flex items-center justify-between mt-0.5">
-                        <p className="text-sm text-primary font-medium">{review.location} 🏠</p>
+                        <p className="flex items-center gap-1 text-sm text-primary font-medium">
+                            <MapPin size={14} /> {review.location}
+                        </p>
                         <p className="text-xs text-neutral-400">{review.date}</p>
                     </div>
                 </div>
             </div>
         ),
     }));
-
-    const { totalRating, maxStars, fullStars, totalReviews } = ratingStats;
 
     return (
         <div className="container-custom pb-20">
@@ -62,22 +49,22 @@ const CustomerReviews: React.FC = () => {
                     </p>
                 </div>
 
-                <div className="flex items-center gap-4 bg-neutral-50 border border-neutral-200 rounded-xl px-5 py-3">
-                    <div className="text-4xl font-extrabold text-neutral-900 leading-none">
-                        {totalRating}
+                <a
+                    href={BUSINESS.googleReviewsUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="group flex items-center gap-4 bg-neutral-50 border border-neutral-200 rounded-2xl px-5 py-3 hover:border-neutral-300 hover:bg-white transition-colors"
+                >
+                    <div className="text-4xl font-extrabold text-neutral-900 leading-none tabular-nums">
+                        {BUSINESS.rating}
                     </div>
                     <div>
-                        <div className="flex gap-0.5">
-                            {[...Array(fullStars)].map((_: undefined, i: number) => (
-                                <span key={i} className="text-xl text-yellow-400">★</span>
-                            ))}
-                            {[...Array(maxStars - fullStars)].map((_: undefined, i: number) => (
-                                <span key={`e-${i}`} className="text-xl text-neutral-300">★</span>
-                            ))}
-                        </div>
-                        <p className="text-sm text-neutral-500 mt-0.5">{totalReviews}</p>
+                        <StarRating rating={BUSINESS.rating} size={18} />
+                        <p className="flex items-center gap-1 text-sm text-neutral-500 mt-1 group-hover:text-primary transition-colors">
+                            {reviewCountLabel} <ArrowUpRight size={14} />
+                        </p>
                     </div>
-                </div>
+                </a>
             </div>
 
             <UnifiedSlider

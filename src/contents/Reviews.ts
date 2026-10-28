@@ -1,12 +1,5 @@
 import { Review } from "@/types/common.types";
 
-export const ratingStats = {
-  totalRating: 4.6,
-  maxStars: 5,
-  fullStars: 4,
-  totalReviews: "1,360 reviews",
-};
-
 export const reviews: Review[] = [
   {
     id: 1,
