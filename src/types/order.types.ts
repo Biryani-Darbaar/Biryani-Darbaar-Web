@@ -33,20 +33,3 @@ export interface CheckoutFormData {
   zipCode: string;
 }
 
-export interface PaymentGateProps {
-  amount: number;
-  order: Array<{
-    cartItemId: string;
-    name: string;
-    quantity: number;
-    price: number;
-  }>;
-  user: {
-    data: {
-      userName: string;
-      phoneNumber: string;
-      address: string;
-      userId: string;
-    };
-  };
-}
