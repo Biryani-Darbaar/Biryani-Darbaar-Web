@@ -171,30 +171,10 @@ export interface ApiOrder {
   paymentVerified?: boolean;
 }
 
+/** Orders are created from a succeeded Stripe payment only — the server
+ *  takes every detail from the quote it saved when the payment was created. */
 export interface CreateOrderData {
-  userId: string;
-  userName: string;
-  phoneNumber: string;
-  address: string;
-  orderItems: {
-    cartItemId: string;
-    /** Server resolves the dish's POS Item ID/Name from this */
-    dishId: string;
-    name: string;
-    quantity: number;
-    price: number;
-  }[];
-  totalPrice: number;
-  /** Stripe PaymentIntent ID — stored for reference and dispute resolution */
-  paymentIntentId?: string;
-  /** Initial order status; defaults to 'pending' on the backend */
-  orderStatus?: string;
-  /** Coins redeemed for a discount on this order */
-  coinsUsed?: number;
-  /** AUD discount applied from coins (coinsUsed * 0.10) */
-  coinDiscount?: number;
-  /** Customer's order instructions — forwarded to the POS docket */
-  instructions?: string;
+  paymentIntentId: string;
 }
 
 export interface CreateOrderResponse {
@@ -211,15 +191,37 @@ export interface CreateOrderResponse {
 // Payment API Types
 // ============================================================================
 
-export interface CreatePaymentIntentData {
-  /** Amount in dollars (backend converts to cents automatically) */
-  amount: number;
-  currency: string;
+/** What the customer is buying — the server prices it; the client never sends an amount. */
+export interface CheckoutInput {
+  items: { dishId: string; quantity: number; cartItemId?: string }[];
+  shippingMethod: "delivery" | "pickup";
+  address?: { lat: number; lng: number; label?: string };
+  promoCode?: string;
+  coinsToUse?: number;
+}
+
+export interface CheckoutQuote {
+  items: { dishId: string; name: string; quantity: number; price: number; cartItemId?: string | null }[];
+  subtotal: number;
+  shippingMethod: "delivery" | "pickup";
+  distanceKm: number | null;
+  deliveryFee: number;
+  promoCode: string | null;
+  promoDiscount: number;
+  coinsUsed: number;
+  coinDiscount: number;
+  total: number;
+}
+
+export interface CreatePaymentIntentData extends CheckoutInput {
+  phoneNumber: string;
+  instructions?: string;
 }
 
 export interface CreatePaymentIntentResponse {
   clientSecret: string;
   paymentIntentId: string;
+  quote: CheckoutQuote;
 }
 
 export interface VerifyPaymentData {
