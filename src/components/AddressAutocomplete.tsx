@@ -29,8 +29,10 @@ import { MapPin, Search, Loader2 } from "lucide-react";
  * 4. Test with a known customer address to verify fees
  */
 export const RESTAURANT_COORDS = {
-  lat: -34.858247, // ⚠️ UPDATE THIS: Current location is Adelaide CBD (placeholder)
-  lng: 138.5444049, // ⚠️ UPDATE THIS: Current location is Adelaide CBD (placeholder)
+  // 183 Hanson Rd, Athol Park — keep in sync with RESTAURANT in the server's
+  // lib/checkout.lib.js (the server's quote is what's actually charged)
+  lat: -34.858247,
+  lng: 138.54698,
   name: "Biryani Darbaar",
 };
 
