@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
@@ -24,6 +24,7 @@ import { useWallet } from "@/contexts/WalletContext";
 import { paymentAPI, ordersAPI, promoAPI } from "@/apis";
 import toast from "react-hot-toast";
 import { validatePhoneNumber, normalizeAustralianPhone } from "@/utils/validation";
+import type { CheckoutInput, CheckoutQuote } from "@/types/api.types";
 import AddressAutocomplete, {
   AddressResult,
 } from "@/components/AddressAutocomplete";
@@ -103,26 +104,69 @@ const CheckoutInner: React.FC = () => {
     }
   }, [walletBalance, coinsApplied, coinsToUse]);
 
-  // ── Price calculations (all derived — no stale state) ────────────────────
-  const subTotal = cartItems.reduce(
+  // ── Price calculations ─────────────────────────────────────────────────
+  // Instant local estimate first; the server quote (live prices, real delivery
+  // fee) replaces it as soon as it arrives and is exactly what gets charged.
+  const localSubTotal = cartItems.reduce(
     (sum, item) => sum + item.price * item.quantity,
     0,
   );
   const minOrder = 25;
-  const needsMore = Math.max(0, minOrder - subTotal);
 
-  const deliveryFee =
+  const localDeliveryFee =
     shippingMethod === "pickup"
       ? 0
       : selectedAddress
         ? selectedAddress.deliveryFee
         : 10;
 
-  const promoDiscountAmt = roundCents(subTotal * promoDiscount);
-  const coinDiscountAmt  = roundCents(coinsToUse * COIN_TO_AUD);
+  const checkoutInput: CheckoutInput = useMemo(() => ({
+    items: cartItems.map((i) => ({ dishId: i.dishId, quantity: i.quantity, cartItemId: i.cartItemId })),
+    shippingMethod,
+    address:
+      shippingMethod === "delivery" && selectedAddress
+        ? {
+            lat: selectedAddress.lat,
+            lng: selectedAddress.lng,
+            label: `${houseNo ? houseNo + ", " : ""}${selectedAddress.streetLine}, ${selectedAddress.suburb}, ${selectedAddress.state} ${selectedAddress.postcode}`,
+          }
+        : undefined,
+    promoCode: promoApplied || undefined,
+    coinsToUse: coinsToUse > 0 ? coinsToUse : 0,
+  }), [cartItems, shippingMethod, selectedAddress, houseNo, promoApplied, coinsToUse]);
+
+  const [quote,        setQuote]        = useState<CheckoutQuote | null>(null);
+  const [quoteError,   setQuoteError]   = useState("");
+  const [quoteLoading, setQuoteLoading] = useState(false);
+  const canQuote =
+    !!user && cartItems.length > 0 && localSubTotal >= minOrder &&
+    (shippingMethod === "pickup" || (!!selectedAddress && !selectedAddress.isOutOfRange));
+
+  useEffect(() => {
+    if (!canQuote) { setQuote(null); setQuoteError(""); return; }
+    let cancelled = false;
+    setQuoteLoading(true);
+    const t = setTimeout(() => {
+      paymentAPI.getQuote(checkoutInput)
+        .then((q) => { if (!cancelled) { setQuote(q); setQuoteError(""); } })
+        .catch((e: unknown) => {
+          if (!cancelled) { setQuote(null); setQuoteError(e instanceof Error ? e.message : "Could not price your order"); }
+        })
+        .finally(() => { if (!cancelled) setQuoteLoading(false); });
+    }, 350);
+    return () => { cancelled = true; clearTimeout(t); };
+  }, [canQuote, checkoutInput]);
+
+  const subTotal         = quote?.subtotal ?? localSubTotal;
+  const needsMore        = Math.max(0, minOrder - subTotal);
+  const deliveryFee      = quote?.deliveryFee ?? localDeliveryFee;
+  const promoDiscountAmt = quote?.promoDiscount ?? roundCents(localSubTotal * promoDiscount);
+  const coinDiscountAmt  = quote?.coinDiscount ?? roundCents(coinsToUse * COIN_TO_AUD);
+  const quotedPrice = (dishId: string, fallback: number) =>
+    quote?.items.find((i) => i.dishId === dishId)?.price ?? fallback;
 
   // Prevent total going below $0
-  const total = Math.max(
+  const total = quote?.total ?? Math.max(
     0,
     roundCents(subTotal - promoDiscountAmt - coinDiscountAmt + deliveryFee),
   );
@@ -228,6 +272,10 @@ const CheckoutInner: React.FC = () => {
       return;
     }
     if (cartItems.length === 0 || subTotal < minOrder) return;
+    if (quoteError) {
+      toast.error(quoteError);
+      return;
+    }
 
     // Stripe minimum is $0.50 AUD
     const STRIPE_MIN = 0.5;
@@ -267,12 +315,19 @@ const CheckoutInner: React.FC = () => {
     setPaymentError(null);
 
     try {
-      // ── Step 1: Create PaymentIntent (discounted amount) ──────────────────
-      // `total` already has coin discount subtracted — Stripe charges exactly this.
-      const { clientSecret } = await paymentAPI.createPaymentIntent({
-        amount:   total,
-        currency: "AUD",
+      // ── Step 1: Server prices the cart and creates the PaymentIntent ──────
+      const { clientSecret, quote: charged } = await paymentAPI.createPaymentIntent({
+        ...checkoutInput,
+        phoneNumber: phone,
+        instructions: instructions.trim(),
       });
+
+      // Never charge an amount the customer hasn't seen
+      if (Math.abs(charged.total - total) > 0.005) {
+        setQuote(charged);
+        toast(`Your total was updated to $${charged.total.toFixed(2)}. Please review and tap Pay again.`, { duration: 7000 });
+        return;
+      }
 
       // ── Step 2: Confirm card payment ──────────────────────────────────────
       const { error: stripeError, paymentIntent } =
@@ -299,82 +354,26 @@ const CheckoutInner: React.FC = () => {
         return;
       }
 
-      // ── Step 3: Payment succeeded — build order payload ───────────────────
-      const deliveryAddress =
-        shippingMethod === "delivery" && selectedAddress
-          ? `${houseNo ? houseNo + ", " : ""}${selectedAddress.streetLine}, ${selectedAddress.suburb}, ${selectedAddress.state} ${selectedAddress.postcode}`
-          : "Pickup";
-
-      const orderPayload = {
-        userId:         user.userId,
-        userName:       `${user.firstName} ${user.lastName}`,
-        phoneNumber:    phone,
-        address:        deliveryAddress,
-        orderItems:     cartItems.map((item) => ({
-          cartItemId: item.cartItemId,
-          dishId:     item.dishId,
-          name:       item.name,
-          quantity:   item.quantity,
-          price:      item.price,
-        })),
-        totalPrice:     total,           // final charged amount (after all discounts)
-        paymentIntentId: paymentIntent.id,
-        orderStatus:    "confirmed",
-        // Coin fields — backend validates and deducts these atomically
-        coinsUsed:      coinsToUse  > 0 ? coinsToUse      : 0,
-        coinDiscount:   coinDiscountAmt > 0 ? coinDiscountAmt : 0,
-        instructions:   instructions.trim(),
-      };
-
-      // ── Step 4: Create order (backend validates coins + deducts atomically) ─
+      // ── Step 3: Payment succeeded → server verifies it with Stripe and
+      //    creates the order (idempotent, so retrying is safe). A Stripe
+      //    webhook also creates it if this tab is closed or the call fails.
       let orderId: string | undefined;
-
-      try {
-        const orderResponse = await ordersAPI.createOrder(orderPayload);
-        orderId = orderResponse.orderId;
-      } catch (orderErr: unknown) {
-        const errMsg =
-          orderErr instanceof Error ? orderErr.message : "Unknown error";
-
-        // If coin validation caused the failure, retry WITHOUT coins so that
-        // the order is still recorded (payment already succeeded — must not lose it).
-        const isCoinError = /coin|wallet|insufficient/i.test(errMsg);
-
-        if (isCoinError && coinsToUse > 0) {
-          console.warn(
-            "[Checkout] Coin validation failed after payment — retrying without coins.",
-            errMsg,
-          );
-          try {
-            const retryResponse = await ordersAPI.createOrder({
-              ...orderPayload,
-              coinsUsed:    0,
-              coinDiscount: 0,
-            });
-            orderId = retryResponse.orderId;
-            handleRemoveCoins();
-            toast("Order placed. Coin discount could not be verified — coins not deducted.", {
-              icon: "⚠️",
-              duration: 7000,
-            });
-          } catch (retryErr: unknown) {
-            console.error("Order creation retry failed:", retryErr);
-            toast.error(
-              `Payment succeeded (${paymentIntent.id}) but the order could not be saved. ` +
-              `Please contact support with this reference.`,
-              { duration: 12000 },
-            );
-            return;
-          }
-        } else {
-          console.error("Order creation failed after payment:", orderErr);
-          toast.error(
-            `Payment succeeded (${paymentIntent.id}) but the order could not be saved. ` +
-            `Please contact support with this reference.`,
-            { duration: 12000 },
-          );
-          return;
+      for (let attempt = 1; attempt <= 3 && !orderId; attempt++) {
+        try {
+          orderId = (await ordersAPI.createOrder({ paymentIntentId: paymentIntent.id })).orderId;
+        } catch (orderErr: unknown) {
+          console.error(`Order confirmation attempt ${attempt} failed:`, orderErr);
+          if (attempt < 3) await new Promise((r) => setTimeout(r, 1500 * attempt));
         }
+      }
+      if (!orderId) {
+        await clearCart();
+        toast.success(
+          "Payment received — your order is being finalised. It will appear in My Orders shortly.",
+          { duration: 10000 },
+        );
+        navigate("/order-history", { replace: true });
+        return;
       }
 
       // ── Step 5: Sync wallet UI (coins may have been deducted by backend) ───
@@ -384,7 +383,7 @@ const CheckoutInner: React.FC = () => {
       }
 
       // ── Step 6: Capture items, clear cart, navigate ────────────────────────
-      const orderedItems = cartItems.map((i) => ({
+      const orderedItems = charged.items.map((i) => ({
         name:     i.name,
         quantity: i.quantity,
         price:    i.price,
@@ -395,11 +394,11 @@ const CheckoutInner: React.FC = () => {
       navigate("/order-success", {
         state: {
           orderId,
-          total,
+          total:           charged.total,
           paymentIntentId: paymentIntent.id,
           items:           orderedItems,
-          coinsUsed:       coinsToUse,
-          coinDiscount:    coinDiscountAmt,
+          coinsUsed:       charged.coinsUsed,
+          coinDiscount:    charged.coinDiscount,
         },
         replace: true,
       });
@@ -464,7 +463,7 @@ const CheckoutInner: React.FC = () => {
                     />
                   </div>
                   <p className="font-medium text-center">Delivery</p>
-                  <p className="text-sm text-neutral-500 text-center">$2.50 fee</p>
+                  <p className="text-sm text-neutral-500 text-center">{shippingMethod === "delivery" && selectedAddress && !selectedAddress.isOutOfRange ? `$${deliveryFee.toFixed(2)} · ${selectedAddress.distanceKm.toFixed(1)} km` : "From $10, by distance"}</p>
                 </button>
 
                 <button
@@ -617,7 +616,7 @@ const CheckoutInner: React.FC = () => {
                         {item.name}
                       </h4>
                       <p className="text-xs text-neutral-500">
-                        ${item.price.toFixed(2)} each
+                        ${quotedPrice(item.dishId, item.price).toFixed(2)} each
                       </p>
                     </div>
                     <div className="flex items-center gap-2">
@@ -702,7 +701,9 @@ const CheckoutInner: React.FC = () => {
                 {/* Total */}
                 <div className="flex justify-between text-xl font-bold text-neutral-800 mt-4 mb-5">
                   <span>Total</span>
-                  <span className="text-green-600">${total.toFixed(2)}</span>
+                  <span className={`text-green-600 tabular-nums transition-opacity ${quoteLoading ? "opacity-50" : ""}`} aria-live="polite">
+                    ${total.toFixed(2)}
+                  </span>
                 </div>
 
                 {/* ── Promo code ─────────────────────────────────────────── */}
@@ -878,6 +879,14 @@ const CheckoutInner: React.FC = () => {
                   </div>
                 )}
 
+                {/* Server couldn't price the order (item unavailable, bad promo, too far…) */}
+                {quoteError && (
+                  <div className="bg-red-50 border border-red-200 rounded-lg p-3 mb-4 flex items-start gap-2">
+                    <AlertCircle className="w-4 h-4 text-red-600 mt-0.5 flex-shrink-0" />
+                    <p className="text-red-700 text-sm">{quoteError}</p>
+                  </div>
+                )}
+
                 {/* Payment error */}
                 {paymentError && (
                   <div className="bg-red-50 border border-red-200 rounded-lg p-3 mb-4 flex items-start gap-2">
@@ -891,6 +900,8 @@ const CheckoutInner: React.FC = () => {
                   onClick={handlePay}
                   disabled={
                     isLoading ||
+                    quoteLoading ||
+                    !!quoteError ||
                     subTotal < minOrder ||
                     cartItems.length === 0 ||
                     !stripe ||
