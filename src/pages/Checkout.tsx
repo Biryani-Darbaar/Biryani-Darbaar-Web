@@ -178,6 +178,13 @@ const CheckoutInner: React.FC = () => {
   const coinRules     = quote?.coins;
   const maxUsableCoins = coinRules?.maxRedeemable ?? 0;
   const coinsToEarn    = coinRules?.toEarn ?? null;
+  // Why there's no quote yet (the coin boxes would otherwise wait forever)
+  const quoteWaitingOn =
+    canQuote ? "" :
+    localSubTotal < minOrder ? `Reach the $${minOrder} minimum order` :
+    shippingMethod === "delivery" && !selectedAddress ? "Enter your delivery address" :
+    shippingMethod === "delivery" && selectedAddress?.isOutOfRange ? "Choose an address within our delivery area" :
+    "";
 
   // ── Handlers ─────────────────────────────────────────────────────────────
 
@@ -781,7 +788,11 @@ const CheckoutInner: React.FC = () => {
                     ) : !coinRules ? (
                       /* Waiting for the server quote to know this order's limit */
                       <p className="text-xs text-amber-700">
-                        {quoteError ? "Fix the issue above to use coins." : "Checking how many coins you can use…"}
+                        {quoteError
+                          ? "Fix the issue above to use coins."
+                          : quoteWaitingOn
+                            ? `${quoteWaitingOn} to see how many coins you can use.`
+                            : "Checking how many coins you can use…"}
                       </p>
                     ) : !coinsApplied && maxUsableCoins < MIN_COINS_TO_REDEEM ? (
                       <p className="text-xs text-amber-700">
@@ -858,11 +869,16 @@ const CheckoutInner: React.FC = () => {
                 </div>
 
                 {/* ── Coins this order earns ─────────────────────────────── */}
-                {coinsToEarn !== null && (
+                {(coinsToEarn !== null || quoteWaitingOn) && (
                   <div className="mb-4 flex items-start gap-2.5 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2.5">
                     <Sparkles size={16} className="text-emerald-600 mt-0.5 shrink-0" />
                     <p className="text-sm text-emerald-900">
-                      {coinsToEarn > 0 ? (
+                      {coinsToEarn === null ? (
+                        <>
+                          Every order earns 5% back in coins. {quoteWaitingOn} to see how many
+                          you'll get.
+                        </>
+                      ) : coinsToEarn > 0 ? (
                         <>
                           You'll earn <strong>{coinsToEarn} coins</strong> (${(coinsToEarn * COIN_TO_AUD).toFixed(2)})
                           {" "}with this order, added to your wallet once it's paid.
