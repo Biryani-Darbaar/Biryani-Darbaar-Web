@@ -322,7 +322,7 @@ const RegisterModal: React.FC<RegisterModalProps> = ({
                       type="text"
                       value={formData[field]}
                       onChange={handleChange}
-                      placeholder={field === "firstName" ? "Mohammed" : "Zaid"}
+                      placeholder={field === "firstName" ? "First name" : "Last name"}
                       autoComplete={
                         field === "firstName" ? "given-name" : "family-name"
                       }

@@ -143,7 +143,7 @@ const Contact: React.FC = () => {
                                     required
                                     disabled={isSubmitting}
                                     className="w-full px-4 py-3 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
-                                    placeholder="John"
+                                    placeholder="First name"
                                 />
                             </motion.div>
                             <motion.div
@@ -163,7 +163,7 @@ const Contact: React.FC = () => {
                                     required
                                     disabled={isSubmitting}
                                     className="w-full px-4 py-3 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
-                                    placeholder="Doe"
+                                    placeholder="Last name"
                                 />
                             </motion.div>
                         </div>
@@ -207,7 +207,7 @@ const Contact: React.FC = () => {
                                 required
                                 disabled={isSubmitting}
                                 className="w-full px-4 py-3 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
-                                placeholder="john.doe@example.com"
+                                placeholder="you@example.com"
                             />
                         </motion.div>
 
