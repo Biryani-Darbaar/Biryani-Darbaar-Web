@@ -10,6 +10,8 @@ import {
   Tag,
   CreditCard,
   AlertCircle,
+  Coins,
+  Sparkles,
 } from "lucide-react";
 import { loadStripe } from "@stripe/stripe-js";
 import {
@@ -171,11 +173,11 @@ const CheckoutInner: React.FC = () => {
     roundCents(subTotal - promoDiscountAmt - coinDiscountAmt + deliveryFee),
   );
 
-  // Max coins the user can apply without making total go negative
-  const maxUsableCoins = Math.min(
-    walletBalance,
-    Math.floor((subTotal - promoDiscountAmt + deliveryFee) / COIN_TO_AUD),
-  );
+  // Coin rules come from the server quote (single source of truth):
+  // max 50% of the order, total never below $10, capped by wallet balance.
+  const coinRules     = quote?.coins;
+  const maxUsableCoins = coinRules?.maxRedeemable ?? 0;
+  const coinsToEarn    = coinRules?.toEarn ?? null;
 
   // ── Handlers ─────────────────────────────────────────────────────────────
 
@@ -230,7 +232,8 @@ const CheckoutInner: React.FC = () => {
     }
     if (parsed > maxUsableCoins) {
       setCoinsError(
-        `Using ${parsed} coins would make the total $0 or negative. Maximum usable: ${maxUsableCoins} coins.`,
+        `You can use up to ${maxUsableCoins} coins on this order (coins cover at most ` +
+          `${Math.round((coinRules?.maxRedeemShare ?? 0.5) * 100)}% and the total stays at least $${coinRules?.minTotalAfterCoins ?? 10}).`,
       );
       return;
     }
@@ -240,7 +243,7 @@ const CheckoutInner: React.FC = () => {
     toast.success(
       `${parsed} coins applied — $${roundCents(parsed * COIN_TO_AUD).toFixed(2)} off!`,
     );
-  }, [coinsInputValue, walletBalance, maxUsableCoins]);
+  }, [coinsInputValue, walletBalance, maxUsableCoins, coinRules]);
 
   const handleRemoveCoins = useCallback(() => {
     setCoinsToUse(0);
@@ -377,10 +380,8 @@ const CheckoutInner: React.FC = () => {
       }
 
       // ── Step 5: Sync wallet UI (coins may have been deducted by backend) ───
-      if (coinsToUse > 0) {
-        // Refresh wallet silently; failure is non-blocking (backend deducted already)
-        refreshWallet().catch(() => {});
-      }
+      // Coins were spent and/or earned — refresh silently (non-blocking)
+      refreshWallet().catch(() => {});
 
       // ── Step 6: Capture items, clear cart, navigate ────────────────────────
       const orderedItems = charged.items.map((i) => ({
@@ -399,6 +400,7 @@ const CheckoutInner: React.FC = () => {
           items:           orderedItems,
           coinsUsed:       charged.coinsUsed,
           coinDiscount:    charged.coinDiscount,
+          coinsEarned:     charged.coins.toEarn,
         },
         replace: true,
       });
@@ -756,7 +758,7 @@ const CheckoutInner: React.FC = () => {
                   {/* Header row */}
                   <div className="flex items-center justify-between px-3 py-2.5 border-b border-amber-200">
                     <span className="flex items-center gap-1.5 text-sm font-semibold text-amber-800">
-                      🪙 Wallet Coins
+                      <Coins size={16} /> Wallet Coins
                     </span>
                     <span className="text-sm font-bold text-amber-700">
                       {isLoadingWallet ? (
@@ -776,11 +778,28 @@ const CheckoutInner: React.FC = () => {
                           <> Earn {MIN_COINS_TO_REDEEM - walletBalance} more coins to unlock.</>
                         )}
                       </p>
+                    ) : !coinRules ? (
+                      /* Waiting for the server quote to know this order's limit */
+                      <p className="text-xs text-amber-700">
+                        {quoteError ? "Fix the issue above to use coins." : "Checking how many coins you can use…"}
+                      </p>
+                    ) : !coinsApplied && maxUsableCoins < MIN_COINS_TO_REDEEM ? (
+                      <p className="text-xs text-amber-700">
+                        Coins can't be used on this order — they can cover up to{" "}
+                        {Math.round(coinRules.maxRedeemShare * 100)}% of an order, and the total
+                        must stay at least ${coinRules.minTotalAfterCoins}.
+                      </p>
                     ) : !coinsApplied ? (
                       /* Input form */
                       <div className="space-y-2">
+                        <p className="text-sm text-amber-900">
+                          You can use up to <strong>{maxUsableCoins} coins</strong>{" "}
+                          (−${(maxUsableCoins * COIN_TO_AUD).toFixed(2)}) on this order.
+                        </p>
                         <p className="text-xs text-amber-700">
-                          1 coin = $0.10 AUD · Min {MIN_COINS_TO_REDEEM} · Max {maxUsableCoins} coins
+                          1 coin = $0.10 · min {MIN_COINS_TO_REDEEM} · up to{" "}
+                          {Math.round(coinRules.maxRedeemShare * 100)}% of the order · total stays ≥ $
+                          {coinRules.minTotalAfterCoins}
                         </p>
                         <div className="flex gap-2">
                           <input
@@ -823,7 +842,8 @@ const CheckoutInner: React.FC = () => {
                       /* Applied badge */
                       <div className="flex items-center justify-between">
                         <span className="text-sm text-amber-800 font-semibold">
-                          🪙 {coinsToUse} coins → −${coinDiscountAmt.toFixed(2)} off
+                          <Coins size={14} className="inline -mt-0.5 mr-1" />
+                          {coinsToUse} coins → −${coinDiscountAmt.toFixed(2)} off
                         </span>
                         <button
                           onClick={handleRemoveCoins}
@@ -836,6 +856,26 @@ const CheckoutInner: React.FC = () => {
                     )}
                   </div>
                 </div>
+
+                {/* ── Coins this order earns ─────────────────────────────── */}
+                {coinsToEarn !== null && (
+                  <div className="mb-4 flex items-start gap-2.5 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2.5">
+                    <Sparkles size={16} className="text-emerald-600 mt-0.5 shrink-0" />
+                    <p className="text-sm text-emerald-900">
+                      {coinsToEarn > 0 ? (
+                        <>
+                          You'll earn <strong>{coinsToEarn} coins</strong> (${(coinsToEarn * COIN_TO_AUD).toFixed(2)})
+                          {" "}with this order, added to your wallet once it's paid.
+                        </>
+                      ) : (
+                        <>
+                          Orders of ${Math.ceil(1 / (coinRules?.earnRate ?? 0.05))} or more earn{" "}
+                          {Math.round((coinRules?.earnRate ?? 0.05) * 100)}% back in coins.
+                        </>
+                      )}
+                    </p>
+                  </div>
+                )}
 
                 {/* ── Stripe Card Input ──────────────────────────────────── */}
                 <div className="mb-4">

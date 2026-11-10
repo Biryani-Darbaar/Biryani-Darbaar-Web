@@ -20,6 +20,7 @@ interface OrderSuccessState {
   total: number;
   paymentIntentId: string;
   items: { name: string; quantity: number; price: number }[];
+  coinsEarned?: number;
 }
 
 // ─── Status icon map ─────────────────────────────────────────────────────────
@@ -129,7 +130,7 @@ const OrderSuccess: React.FC = () => {
     return <Navigate to="/" replace />;
   }
 
-  const { orderId, total, paymentIntentId, items = [] } = state;
+  const { orderId, total, paymentIntentId, items = [], coinsEarned = 0 } = state;
 
   // Register the order — ActiveOrderContext will immediately subscribe to
   // Firestore and start receiving real-time status updates from admin.
@@ -215,6 +216,12 @@ const OrderSuccess: React.FC = () => {
             <span>Total Paid</span>
             <span className="text-green-600">${total.toFixed(2)}</span>
           </div>
+          {coinsEarned > 0 && (
+            <p className="mt-3 rounded-lg bg-emerald-50 border border-emerald-200 px-3 py-2 text-sm text-emerald-900">
+              <strong>+{coinsEarned} coins</strong> added to your wallet
+              (worth ${(coinsEarned * 0.1).toFixed(2)} off a future order).
+            </p>
+          )}
         </div>
 
         {/* Actions */}

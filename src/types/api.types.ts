@@ -211,6 +211,17 @@ export interface CheckoutQuote {
   coinsUsed: number;
   coinDiscount: number;
   total: number;
+  /** Wallet coin rules for this order — set on the server (lib/checkout.lib.js) */
+  coins: {
+    balance: number;
+    maxRedeemable: number;
+    minToRedeem: number;
+    valueEach: number;
+    toEarn: number;
+    earnRate: number;
+    maxRedeemShare: number;
+    minTotalAfterCoins: number;
+  };
 }
 
 export interface CreatePaymentIntentData extends CheckoutInput {
