@@ -7,7 +7,7 @@ const ServicesSection: React.FC = () => {
             <div className="container-custom">
                 <div className="flex flex-col md:flex-row items-center gap-12">
                     <div className="hidden md:block md:w-2/5">
-                        <img src="/assets/images/serviceschef.png" alt="Biryani Darbaar - Chef" className="w-full h-auto" />
+                        <img src="/assets/images/services-chef.webp" alt="Biryani Darbaar chef serving biryani" width={900} height={1035} loading="lazy" className="w-full h-auto" />
                     </div>
                     <div className="w-full md:w-2/3">
                         <h2 className="text-4xl md:text-5xl font-bold text-center md:text-left">

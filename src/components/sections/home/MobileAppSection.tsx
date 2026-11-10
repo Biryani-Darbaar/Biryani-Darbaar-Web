@@ -19,7 +19,7 @@ const MobileAppSection: React.FC = () => {
                     <AppStoreBadges className="items-center md:items-start mt-8" />
                 </div>
                 <div className="hidden md:block left-8 relative md:w-1/2">
-                    <img src="/assets/images/mobileappchef.png" alt="Biryani Darbaar - Mobile App" className="w-full h-auto" />
+                    <img src="/assets/images/app-chef.webp" alt="Biryani Darbaar chef holding a phone" width={900} height={802} loading="lazy" className="w-full h-auto" />
                 </div>
             </div>
         </div>

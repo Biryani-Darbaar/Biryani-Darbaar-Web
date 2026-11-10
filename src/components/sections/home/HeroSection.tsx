@@ -148,9 +148,11 @@ const HeroSection: React.FC<HeroSectionProps> = ({ onSearch }) => {
                             {/* Girl Image with Circle */}
                             <div className="w-[410px] h-[410px] rounded-full bg-primary overflow-hidden relative z-20">
                                 <img
-                                    src="/assets/images/hero-model.png"
-                                    alt="Biryani Darbaar - Food delivery"
-                                    className="max-h-[500px] ml-5 -mt-24 object-cover"
+                                    src="/assets/images/hero-chef.webp"
+                                    alt="Biryani Darbaar chef"
+                                    width={900}
+                                    height={1342}
+                                    className="w-[330px] h-auto mx-auto mt-6"
                                 />
                             </div>
 
