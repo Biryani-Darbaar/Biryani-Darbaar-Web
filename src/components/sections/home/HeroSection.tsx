@@ -24,7 +24,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({ onSearch }) => {
     }, []);
 
     return (
-        <div className="relative min-h-screen flex items-center justify-center overflow-hidden w-full pt-12">
+        <div className="relative min-h-screen flex items-center justify-center overflow-hidden w-full pt-6">
             <div
                 className="absolute inset-0 max-h-screen"
                 style={{
@@ -112,8 +112,8 @@ const HeroSection: React.FC<HeroSectionProps> = ({ onSearch }) => {
                         animate={{ opacity: 1, x: 0 }}
                         transition={{ duration: 0.8 }}
                     >
-                        <div className="relative">
-                            {/* Happy Customer Badge */}
+                        <div className="relative -top-12 ">
+                            {/* Happy Customer adge */}
                             <a
                                 href={BUSINESS.googleReviewsUrl}
                                 target="_blank"
