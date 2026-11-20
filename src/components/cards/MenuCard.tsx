@@ -3,6 +3,7 @@ import { useCart } from "@/contexts/CartContext";
 import { motion } from "framer-motion";
 import { Plus, Minus } from "lucide-react";
 import { MenuCardProps } from "@/types";
+import { useOrderingOpen } from "@/hooks/useOrderingOpen";
 
 const MenuCard: React.FC<MenuCardProps> = ({
   title,
@@ -12,6 +13,7 @@ const MenuCard: React.FC<MenuCardProps> = ({
   price,
 }) => {
   const { cartItems, updateQuantity, addToCart } = useCart();
+  const orderingOpen = useOrderingOpen();
 
   const cartItem = cartItems.find((item) => item.dishId === dishId);
   const currentQuantity = cartItem?.quantity || 0;
@@ -73,7 +75,11 @@ const MenuCard: React.FC<MenuCardProps> = ({
           ${typeof price === "number" ? price.toFixed(2) : price}
         </span>
 
-        {currentQuantity === 0 ? (
+        {currentQuantity === 0 && !orderingOpen ? (
+          <span className="text-sm font-semibold text-neutral-400" title="Online ordering is paused right now">
+            Ordering paused
+          </span>
+        ) : currentQuantity === 0 ? (
           <motion.button
             onClick={handleAdd}
             whileHover={{ scale: 1.05 }}
@@ -87,6 +93,7 @@ const MenuCard: React.FC<MenuCardProps> = ({
           <div className="flex items-center gap-3">
             <button
               onClick={() => cartItem && updateQuantity(cartItem.cartItemId, -1)}
+              aria-label="Remove one"
               className="w-9 h-9 rounded-full bg-red-100 hover:bg-red-200 flex items-center justify-center transition-colors"
             >
               <Minus className="w-4 h-4 text-red-600" />
@@ -96,7 +103,10 @@ const MenuCard: React.FC<MenuCardProps> = ({
             </span>
             <button
               onClick={() => cartItem && updateQuantity(cartItem.cartItemId, 1)}
-              className="w-9 h-9 rounded-full bg-green-100 hover:bg-green-200 flex items-center justify-center transition-colors"
+              disabled={!orderingOpen}
+              aria-label="Add one more"
+              title={orderingOpen ? undefined : "Online ordering is paused right now"}
+              className="w-9 h-9 rounded-full bg-green-100 hover:bg-green-200 flex items-center justify-center transition-colors disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-green-100"
             >
               <Plus className="w-4 h-4 text-green-600" />
             </button>

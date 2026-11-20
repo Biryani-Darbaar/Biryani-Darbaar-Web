@@ -4,11 +4,14 @@ import OrderSection from "@/components/sections/order/OrderSection";
 import InfoPage from "@/components/sections/InfoSection";
 import LocationInfo from "@/components/sections/LocationSection";
 import { motion } from "framer-motion";
+import OrderingPausedNotice from "@/components/OrderingPausedNotice";
+import { useOrderingOpen } from "@/hooks/useOrderingOpen";
 
 // No local CartProvider — uses the App-level CartProvider so cart state is
 // shared with Checkout.tsx. Adding one here would create an isolated cart
 // instance invisible to the rest of the app.
 const Order = () => {
+  const orderingOpen = useOrderingOpen();
   return (
     <div className="flex flex-col gap-16 md:gap-24">
       {/* Hero + menu order section */}
@@ -21,6 +24,11 @@ const Order = () => {
             that pushes the hero below the fixed navbar, plus container-custom
             for max-width and horizontal padding. */}
         <div className="container-custom section-spacing mt-12">
+          {!orderingOpen && (
+            <div className="mb-6">
+              <OrderingPausedNotice />
+            </div>
+          )}
           <LargeImageView
             title="Biryani in Australia"
             description="The rich flavors of Hyderabad biryani"
