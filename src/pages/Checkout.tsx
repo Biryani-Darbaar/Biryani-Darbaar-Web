@@ -27,6 +27,9 @@ import { paymentAPI, ordersAPI, promoAPI } from "@/apis";
 import toast from "react-hot-toast";
 import { validatePhoneNumber, normalizeAustralianPhone } from "@/utils/validation";
 import type { CheckoutInput, CheckoutQuote } from "@/types/api.types";
+import { getErrorMessage } from "@/types";
+import OrderingPausedNotice from "@/components/OrderingPausedNotice";
+import { useOrderingOpen, markOrderingPaused, isOrdersPausedError } from "@/hooks/useOrderingOpen";
 import AddressAutocomplete, {
   AddressResult,
 } from "@/components/AddressAutocomplete";
@@ -137,11 +140,13 @@ const CheckoutInner: React.FC = () => {
     coinsToUse: coinsToUse > 0 ? coinsToUse : 0,
   }), [cartItems, shippingMethod, selectedAddress, houseNo, promoApplied, coinsToUse]);
 
+  // Admin "online orders OFF" switch (live). The API enforces it too.
+  const orderingOpen = useOrderingOpen();
   const [quote,        setQuote]        = useState<CheckoutQuote | null>(null);
   const [quoteError,   setQuoteError]   = useState("");
   const [quoteLoading, setQuoteLoading] = useState(false);
   const canQuote =
-    !!user && cartItems.length > 0 && localSubTotal >= minOrder &&
+    orderingOpen && !!user && cartItems.length > 0 && localSubTotal >= minOrder &&
     (shippingMethod === "pickup" || (!!selectedAddress && !selectedAddress.isOutOfRange));
 
   useEffect(() => {
@@ -152,7 +157,10 @@ const CheckoutInner: React.FC = () => {
       paymentAPI.getQuote(checkoutInput)
         .then((q) => { if (!cancelled) { setQuote(q); setQuoteError(""); } })
         .catch((e: unknown) => {
-          if (!cancelled) { setQuote(null); setQuoteError(e instanceof Error ? e.message : "Could not price your order"); }
+          if (cancelled) return;
+          if (isOrdersPausedError(e)) { markOrderingPaused(); return; }
+          setQuote(null);
+          setQuoteError(getErrorMessage(e) || "Could not price your order");
         })
         .finally(() => { if (!cancelled) setQuoteLoading(false); });
     }, 350);
@@ -353,6 +361,12 @@ const CheckoutInner: React.FC = () => {
 
       if (stripeError) {
         // Payment failed — nothing deducted, safe to retry
+        if (stripeError.payment_intent?.status === "canceled") {
+          // Admin switched online ordering off while this page was open (unpaid intents are cancelled)
+          markOrderingPaused();
+          toast.error("We've just stopped taking online orders — you have not been charged.", { duration: 8000 });
+          return;
+        }
         setPaymentError(stripeError.message || "Payment failed. Please try again.");
         return;
       }
@@ -413,11 +427,12 @@ const CheckoutInner: React.FC = () => {
       });
     } catch (err: unknown) {
       console.error("Checkout error:", err);
-      setPaymentError(
-        err instanceof Error
-          ? err.message
-          : "An unexpected error occurred. Please try again.",
-      );
+      if (isOrdersPausedError(err)) {
+        markOrderingPaused();
+        toast.error("We've just stopped taking online orders — you have not been charged.", { duration: 8000 });
+        return;
+      }
+      setPaymentError(getErrorMessage(err) || "An unexpected error occurred. Please try again.");
     } finally {
       setIsLoading(false);
     }
@@ -715,6 +730,10 @@ const CheckoutInner: React.FC = () => {
                   </span>
                 </div>
 
+                {!orderingOpen ? (
+                  <OrderingPausedNotice compact showMenuLink />
+                ) : (
+                <>
                 {/* ── Promo code ─────────────────────────────────────────── */}
                 {!promoApplied ? (
                   <div className="mb-4">
@@ -989,6 +1008,8 @@ const CheckoutInner: React.FC = () => {
                 <p className="mt-3 text-xs text-neutral-400 text-center">
                   Payments are secured by Stripe. Card details are never stored on our servers.
                 </p>
+                </>
+                )}
               </>
             )}
           </motion.div>
