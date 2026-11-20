@@ -16,6 +16,7 @@ import { useCart } from "@/contexts/CartContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { useWallet } from "@/contexts/WalletContext";
 import { navbarLinks } from "@/contents/NavbarLinks";
+import { useOrderingOpen } from "@/hooks/useOrderingOpen";
 import LoginModal from "@/components/modals/LoginModal";
 import RegisterModal from "@/components/modals/RegisterModal";
 import CartModal from "@/components/modals/CartModal";
@@ -37,6 +38,10 @@ const Navbar: React.FC = () => {
   const { user, isAuthenticated, logout } = useAuth();
   const { walletBalance, canSpinToday, setShowSpinWheel } = useWallet();
   const location: Location = useLocation();
+  const orderingOpen = useOrderingOpen();
+  // "Order Now" is disabled while the admin has online ordering switched off
+  const isPausedLink = (path: string) => path === "/Order" && !orderingOpen;
+  const PAUSED_TITLE = "Online ordering is paused right now";
 
   useEffect(() => {
     const handleScroll = (): void => setIsScrolled(window.scrollY > 20);
@@ -175,15 +180,30 @@ const Navbar: React.FC = () => {
 
           {/* Desktop Navigation */}
           <div className="hidden lg:flex items-center gap-1 xl:gap-4 text-neutral-900">
-            {navbarLinks.map((link) => (
-              <Link
-                key={link.path}
-                to={link.path}
-                className={getNavItemClass(link.path)}
-              >
-                {link.label}
-              </Link>
-            ))}
+            {navbarLinks.map((link) =>
+              isPausedLink(link.path) ? (
+                <span
+                  key={link.path}
+                  role="link"
+                  aria-disabled="true"
+                  title={PAUSED_TITLE}
+                  className="relative inline-flex items-center gap-2 whitespace-nowrap px-3 xl:px-4 py-2 text-base xl:text-lg font-medium text-neutral-400 cursor-not-allowed select-none"
+                >
+                  {link.label}
+                  <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-amber-800">
+                    Paused
+                  </span>
+                </span>
+              ) : (
+                <Link
+                  key={link.path}
+                  to={link.path}
+                  className={getNavItemClass(link.path)}
+                >
+                  {link.label}
+                </Link>
+              ),
+            )}
           </div>
 
           {/* Actions */}
@@ -330,16 +350,28 @@ const Navbar: React.FC = () => {
             className="lg:hidden bg-white border-t border-neutral-200 shadow-[0_16px_30px_-12px_rgba(0,0,0,0.25)]"
           >
             <div className="container-custom py-4 space-y-2">
-              {navbarLinks.map((link) => (
-                <Link
-                  key={link.path}
-                  to={link.path}
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className={getMobileNavClass(link.path)}
-                >
-                  {link.label}
-                </Link>
-              ))}
+              {navbarLinks.map((link) =>
+                isPausedLink(link.path) ? (
+                  <span
+                    key={link.path}
+                    role="link"
+                    aria-disabled="true"
+                    className="flex items-center justify-between py-3 px-4 rounded-lg text-base font-medium text-neutral-400 cursor-not-allowed"
+                  >
+                    {link.label}
+                    <span className="text-xs font-semibold text-amber-800">{PAUSED_TITLE}</span>
+                  </span>
+                ) : (
+                  <Link
+                    key={link.path}
+                    to={link.path}
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className={getMobileNavClass(link.path)}
+                  >
+                    {link.label}
+                  </Link>
+                ),
+              )}
 
               {/* Mobile Auth Button */}
               <div className="pt-4 border-t border-neutral-200">
