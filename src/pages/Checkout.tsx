@@ -28,8 +28,11 @@ import toast from "react-hot-toast";
 import { validatePhoneNumber, normalizeAustralianPhone } from "@/utils/validation";
 import type { CheckoutInput, CheckoutQuote } from "@/types/api.types";
 import { getErrorMessage } from "@/types";
-import OrderingPausedNotice from "@/components/OrderingPausedNotice";
-import { useOrderingOpen, markOrderingPaused, isOrdersPausedError } from "@/hooks/useOrderingOpen";
+import OrderingPausedNotice, { MethodPausedNotice } from "@/components/OrderingPausedNotice";
+import {
+  useOrderingSettings, getOrderingSettings, markOrderingPaused, markMethodPaused,
+  isOrdersPausedError, isMethodPausedError,
+} from "@/hooks/useOrderingOpen";
 import AddressAutocomplete, {
   AddressResult,
 } from "@/components/AddressAutocomplete";
@@ -140,13 +143,25 @@ const CheckoutInner: React.FC = () => {
     coinsToUse: coinsToUse > 0 ? coinsToUse : 0,
   }), [cartItems, shippingMethod, selectedAddress, houseNo, promoApplied, coinsToUse]);
 
-  // Admin "online orders OFF" switch (live). The API enforces it too.
-  const orderingOpen = useOrderingOpen();
+  // Admin "online orders" + pickup/delivery switches (live). The API enforces them too.
+  const ordering = useOrderingSettings();
+  const orderingOpen = ordering.open;
+  const methodOpen = ordering[shippingMethod];
+
+  // The chosen method was switched off → move to the other one and say so
+  useEffect(() => {
+    if (!orderingOpen || ordering[shippingMethod]) return;
+    const other = shippingMethod === "pickup" ? "delivery" : "pickup";
+    if (!ordering[other]) return;
+    setShippingMethod(other);
+    toast(`${shippingMethod === "pickup" ? "Pickup" : "Delivery"} isn't available right now, so we've switched you to ${other}.`, { icon: "ℹ️", duration: 6000 });
+  }, [orderingOpen, ordering, shippingMethod]);
+
   const [quote,        setQuote]        = useState<CheckoutQuote | null>(null);
   const [quoteError,   setQuoteError]   = useState("");
   const [quoteLoading, setQuoteLoading] = useState(false);
   const canQuote =
-    orderingOpen && !!user && cartItems.length > 0 && localSubTotal >= minOrder &&
+    orderingOpen && methodOpen && !!user && cartItems.length > 0 && localSubTotal >= minOrder &&
     (shippingMethod === "pickup" || (!!selectedAddress && !selectedAddress.isOutOfRange));
 
   useEffect(() => {
@@ -159,6 +174,7 @@ const CheckoutInner: React.FC = () => {
         .catch((e: unknown) => {
           if (cancelled) return;
           if (isOrdersPausedError(e)) { markOrderingPaused(); return; }
+          if (isMethodPausedError(e)) { markMethodPaused(checkoutInput.shippingMethod); return; }
           setQuote(null);
           setQuoteError(getErrorMessage(e) || "Could not price your order");
         })
@@ -362,9 +378,15 @@ const CheckoutInner: React.FC = () => {
       if (stripeError) {
         // Payment failed — nothing deducted, safe to retry
         if (stripeError.payment_intent?.status === "canceled") {
-          // Admin switched online ordering off while this page was open (unpaid intents are cancelled)
-          markOrderingPaused();
-          toast.error("We've just stopped taking online orders — you have not been charged.", { duration: 8000 });
+          // Admin switched online ordering (or this pickup/delivery option) off while this
+          // page was open — unpaid intents are cancelled. The live switch shows which.
+          const now = getOrderingSettings();
+          if (now.open && !now[shippingMethod]) {
+            toast.error(`${shippingMethod === "pickup" ? "Pickup" : "Delivery"} was just switched off — you have not been charged. Please review your order and pay again.`, { duration: 8000 });
+          } else {
+            if (now.open) markOrderingPaused(); // listener hasn't caught up yet
+            toast.error("We've just stopped taking online orders — you have not been charged.", { duration: 8000 });
+          }
           return;
         }
         setPaymentError(stripeError.message || "Payment failed. Please try again.");
@@ -432,6 +454,11 @@ const CheckoutInner: React.FC = () => {
         toast.error("We've just stopped taking online orders — you have not been charged.", { duration: 8000 });
         return;
       }
+      if (isMethodPausedError(err)) {
+        markMethodPaused(shippingMethod);
+        toast.error(getErrorMessage(err), { duration: 8000 });
+        return;
+      }
       setPaymentError(getErrorMessage(err) || "An unexpected error occurred. Please try again.");
     } finally {
       setIsLoading(false);
@@ -472,12 +499,18 @@ const CheckoutInner: React.FC = () => {
               <h2 className="text-xl font-semibold mb-4 text-neutral-800">
                 Delivery Method
               </h2>
+              {orderingOpen && (
+                <MethodPausedNotice pickup={ordering.pickup} delivery={ordering.delivery} className="mb-4" />
+              )}
               <div className="grid grid-cols-2 gap-4">
                 <button
-                  className={`p-4 rounded-lg border-2 transition-all duration-200 ${
+                  type="button"
+                  disabled={!ordering.delivery}
+                  aria-pressed={shippingMethod === "delivery"}
+                  className={`p-4 rounded-lg border-2 transition-all duration-200 disabled:cursor-not-allowed disabled:opacity-50 disabled:bg-neutral-50 ${
                     shippingMethod === "delivery"
                       ? "border-green-500 bg-green-50"
-                      : "border-neutral-200 hover:border-neutral-300"
+                      : "border-neutral-200 hover:border-neutral-300 disabled:hover:border-neutral-200"
                   }`}
                   onClick={() => setShippingMethod("delivery")}
                 >
@@ -487,14 +520,17 @@ const CheckoutInner: React.FC = () => {
                     />
                   </div>
                   <p className="font-medium text-center">Delivery</p>
-                  <p className="text-sm text-neutral-500 text-center">{shippingMethod === "delivery" && selectedAddress && !selectedAddress.isOutOfRange ? `$${deliveryFee.toFixed(2)} · ${selectedAddress.distanceKm.toFixed(1)} km` : "From $10, by distance"}</p>
+                  <p className="text-sm text-neutral-500 text-center">{!ordering.delivery ? "Not available right now" : shippingMethod === "delivery" && selectedAddress && !selectedAddress.isOutOfRange ? `$${deliveryFee.toFixed(2)} · ${selectedAddress.distanceKm.toFixed(1)} km` : "From $10, by distance"}</p>
                 </button>
 
                 <button
-                  className={`p-4 rounded-lg border-2 transition-all duration-200 ${
+                  type="button"
+                  disabled={!ordering.pickup}
+                  aria-pressed={shippingMethod === "pickup"}
+                  className={`p-4 rounded-lg border-2 transition-all duration-200 disabled:cursor-not-allowed disabled:opacity-50 disabled:bg-neutral-50 ${
                     shippingMethod === "pickup"
                       ? "border-blue-500 bg-blue-50"
-                      : "border-neutral-200 hover:border-neutral-300"
+                      : "border-neutral-200 hover:border-neutral-300 disabled:hover:border-neutral-200"
                   }`}
                   onClick={() => setShippingMethod("pickup")}
                 >
@@ -504,7 +540,7 @@ const CheckoutInner: React.FC = () => {
                     />
                   </div>
                   <p className="font-medium text-center">Pickup</p>
-                  <p className="text-sm text-neutral-500 text-center">Free</p>
+                  <p className="text-sm text-neutral-500 text-center">{ordering.pickup ? "Free" : "Not available right now"}</p>
                 </button>
               </div>
             </div>
